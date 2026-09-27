@@ -308,3 +308,47 @@ class SparkAIService:
     def get_insight(cls) -> str:
         """6. ✨ SPARK AI INSIGHT: 高传播度观点金句"""
         return random.choice(cls.INSIGHTS)
+
+    @classmethod
+    async def generate_random_hourly_post(cls) -> Dict[str, Any]:
+        """
+        每小时自动随机选内容 post:
+        在 6 大核心投研支柱中智能加权随机抽取：
+        1. ⚡ SPARK AI DAILY (25% 概率)
+        2. 📊 AI MARKET INTELLIGENCE (20% 概率)
+        3. 🧠 HOW SPARK AI THINKS (5大引擎轮巡) (20% 概率)
+        4. 🎓 AI KNOWLEDGE (微课堂 #001~#008 轮巡) (20% 概率)
+        5. ✨ SPARK AI INSIGHT (高传播金句) (10% 概率)
+        6. 🚨 AI RISK ALERT (风控防御警报) (5% 概率)
+        """
+        pillars = ["daily", "intelligence", "how_thinks", "knowledge", "insight", "risk_alert"]
+        weights = [0.25, 0.20, 0.20, 0.20, 0.10, 0.05]
+        chosen = random.choices(pillars, weights=weights, k=1)[0]
+
+        if chosen == "daily":
+            text = await cls.generate_daily_brief()
+            title = "⚡ SPARK AI DAILY"
+        elif chosen == "intelligence":
+            text = await cls.generate_market_intelligence()
+            title = "📊 AI MARKET INTELLIGENCE"
+        elif chosen == "how_thinks":
+            engine_idx = random.randint(0, len(cls.ENGINES_KNOWLEDGE) - 1)
+            text = cls.generate_how_spark_ai_thinks(engine_idx)
+            title = f"🧠 HOW SPARK AI THINKS: {cls.ENGINES_KNOWLEDGE[engine_idx]['engine']}"
+        elif chosen == "knowledge":
+            k_idx = random.randint(0, len(cls.KNOWLEDGE_SERIES) - 1)
+            text = cls.get_knowledge_item(k_idx)
+            title = f"🎓 SPARK AI KNOWLEDGE {cls.KNOWLEDGE_SERIES[k_idx]['id']}"
+        elif chosen == "risk_alert":
+            text = cls.generate_risk_alert()
+            title = "🚨 SPARK AI RISK ALERT"
+        else:
+            text = cls.get_insight()
+            title = "✨ SPARK AI INSIGHT"
+
+        return {
+            "pillar": chosen,
+            "title": title,
+            "text": text
+        }
+

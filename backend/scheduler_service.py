@@ -65,6 +65,11 @@ class SchedulerService:
             if market_type == "gold":
                 res = await MarketService.get_gold_market_data()
                 msg_text = res["telegram_message"]
+            elif market_type in ("spark_ai_random", "spark_ai_hourly"):
+                from backend.spark_ai_service import SparkAIService
+                post_data = await SparkAIService.generate_random_hourly_post()
+                msg_text = post_data["text"]
+                sched_name = f"{sched_name} [{post_data['title']}]"
             elif market_type == "spark_ai_daily":
                 from backend.spark_ai_service import SparkAIService
                 msg_text = await SparkAIService.generate_daily_brief()

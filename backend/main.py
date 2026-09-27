@@ -285,7 +285,10 @@ class SparkAISendModel(BaseModel):
 @app.get("/api/spark_ai/generate/{content_type}")
 async def generate_spark_ai_content(content_type: str, index: int = 0):
     """根据类型实时生成 SPARK AI 官方研究内容"""
-    if content_type == "daily":
+    if content_type == "random":
+        res = await SparkAIService.generate_random_hourly_post()
+        return {"success": True, "title": res["title"], "text": res["text"], "pillar": res.get("pillar")}
+    elif content_type == "daily":
         text = await SparkAIService.generate_daily_brief()
         title = "⚡ SPARK AI DAILY"
     elif content_type == "intelligence":
@@ -305,6 +308,13 @@ async def generate_spark_ai_content(content_type: str, index: int = 0):
         title = "✨ SPARK AI INSIGHT"
 
     return {"success": True, "title": title, "text": text}
+
+@app.get("/api/spark_ai/random")
+async def get_random_spark_ai():
+    """随机生成一条 SPARK AI 6大核心支柱内容"""
+    res = await SparkAIService.generate_random_hourly_post()
+    return {"success": True, "title": res["title"], "text": res["text"], "pillar": res.get("pillar")}
+
 
 @app.post("/api/spark_ai/send")
 async def send_spark_ai_content(payload: SparkAISendModel):
