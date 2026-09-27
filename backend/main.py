@@ -31,21 +31,42 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "uploads"))
+IS_VERCEL = os.environ.get("VERCEL") == "1" or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") is not None
+
+if IS_VERCEL:
+    UPLOAD_DIR = "/tmp/uploads"
+else:
+    UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "uploads"))
+
 STATIC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "static"))
 TEMPLATES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "templates"))
 
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-os.makedirs(STATIC_DIR, exist_ok=True)
-os.makedirs(TEMPLATES_DIR, exist_ok=True)
+try:
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+except Exception:
+    pass
 
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+try:
+    os.makedirs(STATIC_DIR, exist_ok=True)
+except Exception:
+    pass
+
+try:
+    if os.path.exists(STATIC_DIR):
+        app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    if os.path.exists(UPLOAD_DIR):
+        app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+except Exception:
+    pass
 
 @app.on_event("startup")
 async def on_startup():
-    # 启动时初始化加载定时任务
-    SchedulerService.reload_schedules()
+    # Vercel Serverless 下不启动常驻线程定时器，由 Vercel Cron Job 触发
+    if not IS_VERCEL:
+        try:
+            SchedulerService.reload_schedules()
+        except Exception:
+            pass
 
 # ================= 数据模型 =================
 class TelegramConfigModel(BaseModel):
@@ -269,8 +290,14 @@ def get_scheduler_logs():
 
 @app.get("/", response_class=HTMLResponse)
 def index_page():
-    index_file = os.path.join(TEMPLATES_DIR, "index.html")
-    if os.path.exists(index_file):
-        with open(index_file, "r", encoding="utf-8") as f:
-            return f.read()
+    candidates = [
+        os.path.join(TEMPLATES_DIR, "index.html"),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "templates", "index.html")),
+        os.path.abspath("frontend/templates/index.html"),
+        "/var/task/frontend/templates/index.html"
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            with open(p, "r", encoding="utf-8") as f:
+                return f.read()
     return "<h1>SparkOne Telegram Web Dashboard is initializing...</h1>"
