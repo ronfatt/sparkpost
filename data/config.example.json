@@ -303,12 +303,32 @@
   ],
   "schedules": [
     {
+      "id": "sched_spark_ai_daily",
+      "name": "⚡ SPARK AI DAILY (每日全球市场脉搏)",
+      "target_topic_id": "spark_ai",
+      "market_type": "spark_ai_daily",
+      "cron": "0 9 * * *",
+      "description": "每天 09:00 准时向 🤖 SPARK AI 话题发送极简全球市场脉搏与 AI 观点",
+      "enabled": true,
+      "auto_send": true
+    },
+    {
+      "id": "sched_spark_ai_intel",
+      "name": "📊 AI MARKET INTELLIGENCE (多维归因深度解析)",
+      "target_topic_id": "spark_ai",
+      "market_type": "spark_ai_intel",
+      "cron": "30 16 * * *",
+      "description": "每天 16:30 向 🤖 SPARK AI 话题解析黄金与大盘波动的多维宏观因素",
+      "enabled": true,
+      "auto_send": true
+    },
+    {
       "id": "sched_gold_hourly",
       "name": "区块链黄金与金融速递 (每小时自动播报)",
       "target_topic_id": "market_gold",
       "market_type": "gold",
       "cron": "0 * * * *",
-      "description": "每小时整点自动拉取区块链 RWA 黄金 (PAXG / XAUT) 与现货金行情，生成高清海报推送到 GOLD MARKET 话题",
+      "description": "每小时整点自动拉取区块链 RWA 黄金 (PAXG / XAUT) 与现货金行情推送到 GOLD MARKET 话题",
       "enabled": true,
       "auto_send": true
     },

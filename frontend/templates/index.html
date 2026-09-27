@@ -88,6 +88,16 @@
           <span>实时市场与行情</span>
         </button>
 
+        <!-- 导航 4: SPARK AI 投研中心 (新增重点) -->
+        <button 
+          @click="activeTab = 'spark_ai'" 
+          :class="activeTab === 'spark_ai' ? 'bg-cyan-600/30 text-cyan-400 border border-cyan-500/40' : 'text-gray-300 hover:bg-gray-800/60'"
+          class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all">
+          <i class="fa-solid fa-robot w-5 text-center"></i>
+          <span>SPARK AI 投研中心</span>
+          <span class="ml-auto text-[10px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded font-mono">DESK</span>
+        </button>
+
         <!-- 导航 4: 定时任务调度 -->
         <button 
           @click="activeTab = 'scheduler'" 
@@ -563,6 +573,203 @@
         </div>
       </section>
 
+      <!-- ================= 模块: SPARK AI 投研中心 (新增重点) ================= -->
+      <section v-if="activeTab === 'spark_ai'" class="space-y-6 max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
+              <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                🤖 SPARK AI Research Desk
+              </h2>
+            </div>
+            <p class="text-xs text-cyan-300 font-mono mt-1">
+              Global Market Intelligence · AI Quant · Risk · Trends | Understand the market. Understand the data.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-xs px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-mono">
+              Topic: 🤖 SPARK AI (#{{ getTargetThreadId('spark_ai') || '未绑' }})
+            </span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- 左侧：6 大核心投研内容生成器 -->
+          <div class="lg:col-span-1 space-y-3">
+            <div class="glass-card rounded-xl p-4 space-y-3">
+              <h3 class="font-bold text-xs uppercase tracking-wider text-gray-400 border-b border-gray-800 pb-2">
+                📡 6 大核心投研栏目
+              </h3>
+
+              <!-- 栏目 1: SPARK AI DAILY -->
+              <div class="p-3 rounded-lg bg-gray-900/70 border border-gray-800 hover:border-cyan-500/50 transition">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                    ⚡ 1. SPARK AI DAILY
+                  </span>
+                  <span class="text-[10px] text-cyan-400 bg-cyan-500/10 px-1 rounded">每日必看</span>
+                </div>
+                <p class="text-[11px] text-gray-400 mb-2">极简全球市场脉搏与宏观观点</p>
+                <button 
+                  @click="generateSparkAI('daily')" 
+                  class="w-full py-1.5 rounded bg-cyan-600/30 hover:bg-cyan-600/50 border border-cyan-500/40 text-cyan-200 text-xs font-semibold transition">
+                  生成今日市场脉搏
+                </button>
+              </div>
+
+              <!-- 栏目 2: AI MARKET INTELLIGENCE -->
+              <div class="p-3 rounded-lg bg-gray-900/70 border border-gray-800 hover:border-amber-500/50 transition">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                    📊 2. MARKET INTELLIGENCE
+                  </span>
+                  <span class="text-[10px] text-amber-400 bg-amber-500/10 px-1 rounded">多维归因</span>
+                </div>
+                <p class="text-[11px] text-gray-400 mb-2">深度剖析“黄金/市场为什么这样走”</p>
+                <button 
+                  @click="generateSparkAI('intelligence')" 
+                  class="w-full py-1.5 rounded bg-amber-600/30 hover:bg-amber-600/50 border border-amber-500/40 text-amber-200 text-xs font-semibold transition">
+                  生成多维归因分析
+                </button>
+              </div>
+
+              <!-- 栏目 3: HOW SPARK AI THINKS -->
+              <div class="p-3 rounded-lg bg-gray-900/70 border border-gray-800 hover:border-indigo-500/50 transition space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                    🧠 3. HOW SPARK AI THINKS
+                  </span>
+                  <span class="text-[10px] text-indigo-400 bg-indigo-500/10 px-1 rounded">5大引擎</span>
+                </div>
+                <p class="text-[11px] text-gray-400">解构核心引擎架构与运行管线</p>
+                <div class="flex gap-2">
+                  <select v-model="selectedEngineIdx" class="glass-input rounded px-2 py-1 text-[11px] flex-1">
+                    <option :value="0">AURORA (黄金策略)</option>
+                    <option :value="1">TITAN (趋势分析)</option>
+                    <option :value="2">ORION (风控中枢)</option>
+                    <option :value="3">PHOENIX (策略优化)</option>
+                    <option :value="4">ATLAS (资产配置)</option>
+                  </select>
+                  <button 
+                    @click="generateSparkAI('how_thinks', selectedEngineIdx)" 
+                    class="px-2.5 py-1 rounded bg-indigo-600/40 hover:bg-indigo-600/60 border border-indigo-500/40 text-indigo-200 text-xs font-semibold transition">
+                    解构
+                  </button>
+                </div>
+              </div>
+
+              <!-- 栏目 4: AI RISK ALERT -->
+              <div class="p-3 rounded-lg bg-gray-900/70 border border-gray-800 hover:border-rose-500/50 transition">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                    🚨 4. AI RISK ALERT
+                  </span>
+                  <span class="text-[10px] text-rose-400 bg-rose-500/10 px-1 rounded">突发风控</span>
+                </div>
+                <p class="text-[11px] text-gray-400 mb-2">波动加剧时启动防御：Risk First</p>
+                <button 
+                  @click="generateSparkAI('risk_alert')" 
+                  class="w-full py-1.5 rounded bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/40 text-rose-200 text-xs font-semibold transition">
+                  生成突发风控警报
+                </button>
+              </div>
+
+              <!-- 栏目 5: AI KNOWLEDGE -->
+              <div class="p-3 rounded-lg bg-gray-900/70 border border-gray-800 hover:border-emerald-500/50 transition space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                    🎓 5. AI KNOWLEDGE
+                  </span>
+                  <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-1 rounded">#001-#008</span>
+                </div>
+                <p class="text-[11px] text-gray-400">单点打透的量化微课堂</p>
+                <div class="flex gap-2">
+                  <select v-model="selectedKnowledgeIdx" class="glass-input rounded px-2 py-1 text-[11px] flex-1">
+                    <option :value="0">#001 What is Quant Trading?</option>
+                    <option :value="1">#002 What is Drawdown?</option>
+                    <option :value="2">#003 What is Volatility?</option>
+                    <option :value="3">#004 What is Risk Management?</option>
+                    <option :value="4">#005 AI vs Human Trading</option>
+                    <option :value="5">#006 Why emotions affect traders</option>
+                    <option :value="6">#007 What is Backtesting?</option>
+                    <option :value="7">#008 What is Asset Allocation?</option>
+                  </select>
+                  <button 
+                    @click="generateSparkAI('knowledge', selectedKnowledgeIdx)" 
+                    class="px-2.5 py-1 rounded bg-emerald-600/40 hover:bg-emerald-600/60 border border-emerald-500/40 text-emerald-200 text-xs font-semibold transition">
+                    载入
+                  </button>
+                </div>
+              </div>
+
+              <!-- 栏目 6: SPARK AI INSIGHT -->
+              <div class="p-3 rounded-lg bg-gray-900/70 border border-gray-800 hover:border-purple-500/50 transition">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                    ✨ 6. SPARK AI INSIGHT
+                  </span>
+                  <span class="text-[10px] text-purple-400 bg-purple-500/10 px-1 rounded">高传播金句</span>
+                </div>
+                <p class="text-[11px] text-gray-400 mb-2">极具洞见的投资哲思，利于二次裂变</p>
+                <button 
+                  @click="generateSparkAI('insight')" 
+                  class="w-full py-1.5 rounded bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/40 text-purple-200 text-xs font-semibold transition">
+                  换一条高传播观点
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- 右侧：编辑与一键投递台 -->
+          <div class="lg:col-span-2 glass-card rounded-xl p-5 space-y-4 flex flex-col">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-800 pb-3">
+              <div>
+                <h3 class="font-bold text-base text-white flex items-center gap-2">
+                  <span>📱 {{ sparkAIPendingTitle || 'SPARK AI 投研发布台' }}</span>
+                </h3>
+                <p class="text-xs text-gray-400">已自动按国际最高标准英文排版，发帖前可直接在线调整</p>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 font-mono">
+                  目标: <b class="text-cyan-300">🤖 SPARK AI</b>
+                </span>
+              </div>
+            </div>
+
+            <!-- 编辑框 -->
+            <div class="flex-1">
+              <textarea 
+                v-model="sparkAIText" 
+                rows="16" 
+                placeholder="点击左侧任意栏目，系统将自动生成权威纯正的英文投研内容..."
+                class="w-full h-full glass-input rounded-lg p-3 text-xs font-mono leading-relaxed resize-y"></textarea>
+            </div>
+
+            <!-- 底部发送按钮 -->
+            <div class="flex items-center justify-between pt-2 border-t border-gray-800">
+              <span class="text-xs text-gray-400">
+                话题 Thread ID: <code class="text-cyan-300 font-mono">{{ getTargetThreadId('spark_ai') || '未设置' }}</code>
+              </span>
+
+              <button 
+                @click="sendSparkAIContent" 
+                :disabled="isSendingSparkAI || !sparkAIText.trim()"
+                class="px-6 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-md transition disabled:opacity-50 flex items-center gap-2">
+                <i v-if="isSendingSparkAI" class="fa-solid fa-spinner animate-spin"></i>
+                <i v-else class="fa-solid fa-paper-plane"></i>
+                <span>{{ isSendingSparkAI ? '正在发送...' : '一键投递到 🤖 SPARK AI 话题' }}</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
       <!-- ================= 模块 4: 定时任务调度 ================= -->
       <section v-if="activeTab === 'scheduler'" class="space-y-6 max-w-6xl mx-auto">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -890,6 +1097,13 @@
         const marketPosterFilename = ref('');
         const includeMarketPoster = ref(true);
         const isSendingMarket = ref(false);
+
+        // SPARK AI 投研模块状态
+        const sparkAIText = ref('');
+        const sparkAIPendingTitle = ref('');
+        const selectedEngineIdx = ref(0);
+        const selectedKnowledgeIdx = ref(0);
+        const isSendingSparkAI = ref(false);
 
         // 定时模块状态
         const schedulerLogs = ref([]);
@@ -1323,6 +1537,47 @@ Beware of scammers and impersonators posing as official SparkOne team members!
           }
         };
 
+        // SPARK AI 投研生成与发送
+        const generateSparkAI = async (type, index = 0) => {
+          try {
+            const res = await fetch(`/api/spark_ai/generate/${type}?index=${index}`);
+            const data = await res.json();
+            if (data.success) {
+              sparkAIText.value = data.text;
+              sparkAIPendingTitle.value = data.title;
+            }
+          } catch (e) {
+            alert('生成 SPARK AI 内容失败: ' + e);
+          }
+        };
+
+        const sendSparkAIContent = async () => {
+          if (!config.value.telegram?.bot_token || !config.value.telegram?.chat_id) {
+            alert('请先在【话题绑定与配置】中配置 Telegram Bot Token 和群组 Chat ID！');
+            activeTab.value = 'settings';
+            return;
+          }
+          if (!sparkAIText.value.trim()) return;
+          isSendingSparkAI.value = true;
+          try {
+            const res = await fetch('/api/spark_ai/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: sparkAIText.value })
+            });
+            const data = await res.json();
+            if (data.success) {
+              alert('🎉 成功投递到 🤖 SPARK AI 话题！');
+            } else {
+              alert('推送失败: ' + (data.error || '未知原因'));
+            }
+          } catch (e) {
+            alert('发送异常: ' + e);
+          } finally {
+            isSendingSparkAI.value = false;
+          }
+        };
+
         // 定时任务保存
         const saveSchedules = async () => {
           try {
@@ -1493,7 +1748,14 @@ Beware of scammers and impersonators posing as official SparkOne team members!
           saveTelegramConfig,
           autoDetectTopics,
           saveTranslationConfig,
-          saveTopicsConfig
+          saveTopicsConfig,
+          sparkAIText,
+          sparkAIPendingTitle,
+          selectedEngineIdx,
+          selectedKnowledgeIdx,
+          isSendingSparkAI,
+          generateSparkAI,
+          sendSparkAIContent
         };
       }
     }).mount('#app');

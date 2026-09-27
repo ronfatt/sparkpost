@@ -60,18 +60,25 @@ class SchedulerService:
         topic = next((t for t in topics if t["id"] == target_topic_id), None)
         thread_id = topic.get("thread_id") if topic else None
 
-        # 2. 生成纯文本金融行情速报 (No image, pure clean text)
+        # 2. 生成纯文本金融行情速报与 AI 投研内容
         try:
             if market_type == "gold":
                 res = await MarketService.get_gold_market_data()
+                msg_text = res["telegram_message"]
+            elif market_type == "spark_ai_daily":
+                from backend.spark_ai_service import SparkAIService
+                msg_text = await SparkAIService.generate_daily_brief()
+            elif market_type == "spark_ai_intel":
+                from backend.spark_ai_service import SparkAIService
+                msg_text = await SparkAIService.generate_market_intelligence()
             elif market_type == "asia_stocks" or market_type == "us_stocks":
                 res = await MarketService.get_global_stocks_data()
+                msg_text = res["telegram_message"]
             else:
                 res = await MarketService.get_market_intelligence_data()
-            
-            msg_text = res["telegram_message"]
+                msg_text = res["telegram_message"]
         except Exception as e:
-            err = f"获取市场行情失败: {e}"
+            err = f"获取市场行情或 AI 投研失败: {e}"
             cls.add_log(sched_id, sched_name, "failed", err)
             return {"success": False, "error": err}
 

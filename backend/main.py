@@ -274,6 +274,60 @@ async def send_market_report(payload: MarketSendModel):
         parse_mode="HTML"
     )
 
+from backend.spark_ai_service import SparkAIService
+
+# ================= SPARK AI 官方投研中心接口 =================
+
+class SparkAISendModel(BaseModel):
+    text: str
+    topic_id: str = "spark_ai"
+
+@app.get("/api/spark_ai/generate/{content_type}")
+async def generate_spark_ai_content(content_type: str, index: int = 0):
+    """根据类型实时生成 SPARK AI 官方研究内容"""
+    if content_type == "daily":
+        text = await SparkAIService.generate_daily_brief()
+        title = "⚡ SPARK AI DAILY"
+    elif content_type == "intelligence":
+        text = await SparkAIService.generate_market_intelligence()
+        title = "📊 AI MARKET INTELLIGENCE"
+    elif content_type == "how_thinks":
+        text = SparkAIService.generate_how_spark_ai_thinks(index)
+        title = "🧠 HOW SPARK AI THINKS"
+    elif content_type == "risk_alert":
+        text = SparkAIService.generate_risk_alert()
+        title = "🚨 SPARK AI RISK ALERT"
+    elif content_type == "knowledge":
+        text = SparkAIService.get_knowledge_item(index)
+        title = f"🎓 SPARK AI KNOWLEDGE"
+    else:
+        text = SparkAIService.get_insight()
+        title = "✨ SPARK AI INSIGHT"
+
+    return {"success": True, "title": title, "text": text}
+
+@app.post("/api/spark_ai/send")
+async def send_spark_ai_content(payload: SparkAISendModel):
+    """一键推送 SPARK AI 投研内容至 SPARK AI 话题"""
+    cfg = load_config()
+    token = cfg.get("telegram", {}).get("bot_token")
+    chat_id = cfg.get("telegram", {}).get("chat_id")
+
+    if not token or not chat_id:
+        raise HTTPException(status_code=400, detail="请先配置 Telegram Bot Token 和 群组 Chat ID")
+
+    topics = cfg.get("topics", [])
+    spark_ai_topic = next((t for t in topics if t["id"] == "spark_ai"), None)
+    thread_id = spark_ai_topic.get("thread_id") if spark_ai_topic else None
+
+    return await TelegramService.send_message(
+        token=token,
+        chat_id=chat_id,
+        text=payload.text,
+        thread_id=thread_id,
+        parse_mode="HTML"
+    )
+
 # ================= 定时任务接口 =================
 
 @app.post("/api/scheduler/trigger/{schedule_id}")

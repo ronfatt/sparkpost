@@ -16,6 +16,14 @@
     {
       "path": "/api/scheduler/trigger/sched_gold_hourly",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/scheduler/trigger/sched_spark_ai_daily",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/scheduler/trigger/sched_spark_ai_intel",
+      "schedule": "30 16 * * *"
     }
   ]
 }
