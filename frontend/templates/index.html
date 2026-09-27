@@ -307,13 +307,22 @@
                 </div>
 
                 <div class="flex items-center gap-1.5 shrink-0">
-                  <label class="cursor-pointer text-[11px] px-2.5 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 transition flex items-center gap-1 font-medium">
+                  <input 
+                    :id="'card-file-' + card.topic_id" 
+                    type="file" 
+                    accept="image/*" 
+                    @change="handleCardImageUpload($event, card)" 
+                    class="hidden">
+                  <button 
+                    type="button"
+                    @click="triggerCardFileInput(card.topic_id)"
+                    class="text-[11px] px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1 font-medium shadow-sm">
                     <i class="fa-solid fa-cloud-arrow-up text-[10px]"></i>
                     <span>{{ card.image_filename ? '更换配图' : '插入翻译图' }}</span>
-                    <input type="file" accept="image/*" @change="handleCardImageUpload($event, card)" class="hidden">
-                  </label>
+                  </button>
                   <button 
                     v-if="card.image_filename" 
+                    type="button"
                     @click="removeCardImage(card)" 
                     title="移除图片"
                     class="text-[11px] px-2 py-1 rounded bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/30 transition">
@@ -1496,6 +1505,15 @@ Beware of scammers and impersonators posing as official SparkOne team members!
           card.image_url = null;
         };
 
+        // 触发卡片文件选择框
+        const triggerCardFileInput = (topicId) => {
+          const el = document.getElementById('card-file-' + topicId);
+          if (el) {
+            el.value = '';
+            el.click();
+          }
+        };
+
         // 一键发送所有卡片
         const handleSendAllBroadcast = async () => {
           if (!config.value.telegram?.bot_token || !config.value.telegram?.chat_id) {
@@ -1829,6 +1847,9 @@ Beware of scammers and impersonators posing as official SparkOne team members!
           insertEmoji,
           handleTranslateAll,
           handleImageUpload,
+          triggerCardFileInput,
+          handleCardImageUpload,
+          removeCardImage,
           handleSendAllBroadcast,
           handleSendSingle,
           fetchMarketPreview,

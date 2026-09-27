@@ -69,13 +69,17 @@ class TranslationService:
             "dt": "t",
             "q": text
         }
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=12.0) as client:
             resp = await client.get(url, params=params)
-            data = resp.json()
-            # data 格式通常为 [[["翻译后的文本", "原文", ...]]]
-            if data and isinstance(data, list) and data[0]:
-                translated_chunks = [part[0] for part in data[0] if part and part[0]]
-                return "".join(translated_chunks)
+            if resp.status_code == 200:
+                try:
+                    data = resp.json()
+                    # data 格式通常为 [[["翻译后的文本", "原文", ...]]]
+                    if data and isinstance(data, list) and data[0]:
+                        translated_chunks = [part[0] for part in data[0] if part and part[0]]
+                        return "".join(translated_chunks)
+                except Exception:
+                    pass
             return text
 
     @classmethod
@@ -189,21 +193,39 @@ class TranslationService:
         api_key: str = "",
         model: str = "gemini-1.5-flash"
     ) -> List[Dict[str, Any]]:
-        """并发将一条文本翻译成所有启用的目标语言"""
+        """并发将一条文本翻译成所有启用的目标语言，内置并发平滑控制"""
         results = []
+        sem = asyncio.Semaphore(3)
+
+        # 预先探测原文是否主要是中文
+        is_input_chinese = any('\u4e00' <= char <= '\u9fff' for char in text[:100])
 
         async def _translate_single(topic: Dict[str, Any]):
             lang_code = topic.get("target_lang", "en")
             lang_name = topic.get("target_lang_name", "English")
-            # 如果原文语言与目标语言相同，比如如果原输入是中文，且目标是中文
-            translated = await cls.translate_text(
-                text=text,
-                target_lang=lang_code,
-                target_lang_name=lang_name,
-                engine=engine,
-                api_key=api_key,
-                model=model
-            )
+
+            # 原文若为中文且目标为中文，直接复用原文无需翻译
+            if lang_code == "zh" and is_input_chinese:
+                return {
+                    "topic_id": topic["id"],
+                    "topic_name": topic["name"],
+                    "target_lang": lang_code,
+                    "target_lang_name": lang_name,
+                    "thread_id": topic.get("thread_id"),
+                    "translated_text": text,
+                    "status": "ready"
+                }
+
+            async with sem:
+                await asyncio.sleep(0.08)
+                translated = await cls.translate_text(
+                    text=text,
+                    target_lang=lang_code,
+                    target_lang_name=lang_name,
+                    engine=engine,
+                    api_key=api_key,
+                    model=model
+                )
             return {
                 "topic_id": topic["id"],
                 "topic_name": topic["name"],
