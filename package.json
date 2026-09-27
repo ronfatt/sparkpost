@@ -1,0 +1,9 @@
+{
+  "name": "sparkone-telegram-dashboard",
+  "version": "1.0.0",
+  "description": "SparkOne Telegram Multilingual Broadcast & Market Operations Dashboard",
+  "scripts": {
+    "start": "bash ./start.sh",
+    "dev": "bash ./start.sh"
+  }
+}

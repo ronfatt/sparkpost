@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPARK ONE • Telegram 全社区运营控制台</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    [v-cloak] { display: none; }
+    body {
+      background-color: #0d1117;
+      color: #e6edf3;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .glass-card {
+      background: rgba(22, 27, 34, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(48, 54, 61, 0.8);
+    }
+    .glass-input {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+    }
+    .glass-input:focus {
+      border-color: #58a6ff;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #30363d;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #58a6ff;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" v-cloak class="min-h-screen flex flex-col md:flex-row">
+    
+    <!-- 侧边栏导航 -->
+    <aside class="w-full md:w-64 glass-card flex flex-col border-r border-gray-800 p-4 shrink-0">
+      <div class="flex items-center space-x-3 px-2 py-3 border-b border-gray-800 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-indigo-600 flex items-center justify-center font-bold text-white text-lg shadow-lg">
+          ⚡
+        </div>
+        <div>
+          <h1 class="font-bold text-base tracking-wide text-white">SPARK ONE</h1>
+          <p class="text-xs text-gray-400">社区运营超级控制台</p>
+        </div>
+      </div>
+
+      <nav class="space-y-1.5 flex-1">
+        <!-- 导航 1: 多语言广播 -->
+        <button 
+          @click="activeTab = 'broadcast'" 
+          :class="activeTab === 'broadcast' ? 'bg-indigo-600/30 text-indigo-400 border border-indigo-500/40' : 'text-gray-300 hover:bg-gray-800/60'"
+          class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all">
+          <i class="fa-solid fa-globe w-5 text-center"></i>
+          <span>11国语言一键广播</span>
+        </button>
+
+        <!-- 导航 2: 社区全板块直发与资料 -->
+        <button 
+          @click="activeTab = 'topics_hub'" 
+          :class="activeTab === 'topics_hub' ? 'bg-purple-600/30 text-purple-400 border border-purple-500/40' : 'text-gray-300 hover:bg-gray-800/60'"
+          class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all">
+          <i class="fa-solid fa-folder-tree w-5 text-center"></i>
+          <span>社区板块 & 资料直发</span>
+          <span class="ml-auto text-xs bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded-full">{{ nonLanguageTopics.length }}区</span>
+        </button>
+
+        <!-- 导航 3: 实时金融市场 -->
+        <button 
+          @click="activeTab = 'markets'" 
+          :class="activeTab === 'markets' ? 'bg-amber-600/30 text-amber-400 border border-amber-500/40' : 'text-gray-300 hover:bg-gray-800/60'"
+          class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all">
+          <i class="fa-solid fa-chart-line w-5 text-center"></i>
+          <span>实时市场与行情</span>
+        </button>
+
+        <!-- 导航 4: 定时任务调度 -->
+        <button 
+          @click="activeTab = 'scheduler'" 
+          :class="activeTab === 'scheduler' ? 'bg-emerald-600/30 text-emerald-400 border border-emerald-500/40' : 'text-gray-300 hover:bg-gray-800/60'"
+          class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all">
+          <i class="fa-solid fa-clock w-5 text-center"></i>
+          <span>定时任务调度</span>
+          <span v-if="activeScheduleCount > 0" class="ml-auto text-xs bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">{{ activeScheduleCount }}</span>
+        </button>
+
+        <!-- 导航 5: 话题与配置绑定 -->
+        <button 
+          @click="activeTab = 'settings'" 
+          :class="activeTab === 'settings' ? 'bg-blue-600/30 text-blue-400 border border-blue-500/40' : 'text-gray-300 hover:bg-gray-800/60'"
+          class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all">
+          <i class="fa-solid fa-sliders w-5 text-center"></i>
+          <span>话题绑定与配置</span>
+        </button>
+      </nav>
+
+      <!-- 底部机器人在线状态卡片 -->
+      <div class="mt-auto pt-4 border-t border-gray-800">
+        <div class="p-3 rounded-lg bg-gray-900/80 border border-gray-800 text-xs space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-400">Telegram Bot:</span>
+            <span v-if="botInfo.username" class="text-emerald-400 font-mono font-medium flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              @{{ botInfo.username }}
+            </span>
+            <span v-else class="text-amber-400">待配置</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-400">群组 Chat ID:</span>
+            <span class="text-gray-200 font-mono truncate max-w-[110px]" :title="config.telegram?.chat_id || '未配置'">
+              {{ config.telegram?.chat_id || '未配置' }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between text-[10px] text-gray-500">
+            <span>托管话题总数:</span>
+            <span class="text-indigo-400 font-mono font-bold">{{ config.topics?.length || 0 }} 个话题</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 主操作区 -->
+    <main class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+
+      <!-- ================= 模块 1: 11国语言一键广播 ================= -->
+      <section v-if="activeTab === 'broadcast'" class="space-y-6 max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-bullhorn text-indigo-400"></i>
+              11国语言国家频道一键广播
+            </h2>
+            <p class="text-sm text-gray-400 mt-1">
+              输入母语公告，自动并发翻译成 11 国语言，精准投递到阿、葡、西、马、印尼、泰、越、日、韩、中、英等国家话题。
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button 
+              @click="selectAllTopics(true)" 
+              class="text-xs px-3 py-1.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 transition">
+              全选话题 ({{ languageTopics.length }})
+            </button>
+            <button 
+              @click="selectAllTopics(false)" 
+              class="text-xs px-3 py-1.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 transition">
+              清空勾选
+            </button>
+          </div>
+        </div>
+
+        <!-- 原文输入与配置 -->
+        <div class="glass-card rounded-xl p-5 space-y-4">
+          <!-- 目标话题快捷勾选胶囊 -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 mb-2">
+              📢 投放目标国家话题 (已选 {{ selectedTopicIds.length }} 个):
+            </label>
+            <div class="flex flex-wrap gap-2">
+              <button 
+                v-for="t in languageTopics" 
+                :key="t.id"
+                @click="toggleTopicSelection(t.id)"
+                :class="selectedTopicIds.includes(t.id) ? 'bg-indigo-600 text-white border-indigo-400' : 'bg-gray-800/80 text-gray-400 border-gray-700'"
+                class="text-xs px-3 py-1.5 rounded-full border transition-all flex items-center gap-1.5">
+                <span>{{ t.name }}</span>
+                <span class="text-[10px] opacity-75 font-mono">({{ t.thread_id ? '#' + t.thread_id : '未设ID' }})</span>
+                <i v-if="selectedTopicIds.includes(t.id)" class="fa-solid fa-check text-[10px]"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- 文本编辑框 -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="text-xs font-semibold text-gray-300">
+                ✏️ 公告原始内容 (支持中文/英文/Markdown/表情):
+              </label>
+              <div class="space-x-1">
+                <button @click="insertEmoji('🎉')" class="text-xs hover:bg-gray-800 px-1 rounded">🎉</button>
+                <button @click="insertEmoji('🔥')" class="text-xs hover:bg-gray-800 px-1 rounded">🔥</button>
+                <button @click="insertEmoji('🚀')" class="text-xs hover:bg-gray-800 px-1 rounded">🚀</button>
+                <button @click="insertEmoji('📢')" class="text-xs hover:bg-gray-800 px-1 rounded">📢</button>
+                <button @click="insertEmoji('⚠️')" class="text-xs hover:bg-gray-800 px-1 rounded">⚠️</button>
+              </div>
+            </div>
+            <textarea 
+              v-model="broadcastText" 
+              rows="5" 
+              placeholder="在这里输入你的公告原文，例如：
+亲爱的社区成员，SparkOne 全新功能正式上线！请点击下方链接体验最新版本，欢迎在各频道交流反馈！..."
+              class="w-full glass-input rounded-lg p-3 text-sm resize-y leading-relaxed"></textarea>
+          </div>
+
+          <!-- 图片上传附件 (可选) -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-gray-800">
+            <div class="flex items-center gap-3">
+              <label class="cursor-pointer text-xs px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 flex items-center gap-2">
+                <i class="fa-solid fa-image text-indigo-400"></i>
+                <span>{{ uploadedImage ? '已选择配图: ' + uploadedImage.filename : '添加配图 (可选)' }}</span>
+                <input type="file" accept="image/*" @change="handleImageUpload" class="hidden">
+              </label>
+              <button v-if="uploadedImage" @click="uploadedImage = null" class="text-xs text-rose-400 hover:underline">
+                移除配图
+              </button>
+            </div>
+
+            <!-- 操作按钮 -->
+            <button 
+              @click="handleTranslateAll" 
+              :disabled="isTranslating || !broadcastText.trim()"
+              class="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-sm shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2">
+              <i v-if="isTranslating" class="fa-solid fa-spinner animate-spin"></i>
+              <i v-else class="fa-solid fa-wand-magic-sparkles"></i>
+              <span>{{ isTranslating ? 'AI 正在并发翻译中...' : '生成 11 国卡片预览' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 翻译结果预览与独立微调卡片区 -->
+        <div v-if="translatedCards.length > 0" class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <span>📋 各国语言预览与微调 ({{ translatedCards.length }} 个)</span>
+              <span class="text-xs font-normal text-gray-400">发帖前可直接在卡片里修改文案</span>
+            </h3>
+
+            <button 
+              @click="handleSendAllBroadcast" 
+              :disabled="isSending"
+              class="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg transition disabled:opacity-50 flex items-center gap-2">
+              <i v-if="isSending" class="fa-solid fa-paper-plane animate-bounce"></i>
+              <i v-else class="fa-solid fa-paper-plane"></i>
+              <span>{{ isSending ? '正在批量分发到各话题...' : '确认无误，一键群发到所选话题！' }}</span>
+            </button>
+          </div>
+
+          <!-- 卡片网格 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div 
+              v-for="card in translatedCards" 
+              :key="card.topic_id"
+              class="glass-card rounded-xl p-4 flex flex-col space-y-3 border-l-4"
+              :class="card.send_status === 'success' ? 'border-l-emerald-500' : (card.send_status === 'error' ? 'border-l-rose-500' : 'border-l-indigo-500')">
+              
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-sm text-white">{{ card.topic_name }}</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-gray-800 text-gray-300 font-mono">
+                    Thread: {{ card.thread_id ? '#' + card.thread_id : '⚠️ 无Thread ID' }}
+                  </span>
+                </div>
+                
+                <span v-if="card.send_status === 'success'" class="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                  <i class="fa-solid fa-circle-check"></i> 发送成功
+                </span>
+                <span v-else-if="card.send_status === 'error'" class="text-xs text-rose-400 font-semibold flex items-center gap-1" :title="card.error_msg">
+                  <i class="fa-solid fa-circle-xmark"></i> 发送失败
+                </span>
+                <span v-else class="text-xs text-gray-500 font-mono">准备发送</span>
+              </div>
+
+              <textarea 
+                v-model="card.translated_text" 
+                rows="4" 
+                class="w-full glass-input rounded p-2.5 text-xs resize-y leading-relaxed font-sans"></textarea>
+
+              <div class="flex items-center justify-between text-[11px] text-gray-400 pt-1">
+                <span>语种: {{ card.target_lang_name }} ({{ card.target_lang }})</span>
+                <button 
+                  @click="handleSendSingle(card)" 
+                  class="text-indigo-400 hover:text-indigo-300 font-medium">
+                  单独重发此条
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 模块 2: 社区全板块 & 资料直发中心 (新增重点) ================= -->
+      <section v-if="activeTab === 'topics_hub'" class="space-y-6 max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-folder-tree text-purple-400"></i>
+              社区业务板块 & 资料统一发布中心
+            </h2>
+            <p class="text-sm text-gray-400 mt-1">
+              集中发布官方安全警报、活动直播、视频资料、福利任务、学院文档等，无需切换群聊，一站式直达各专属话题。
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- 左侧：板块分类快速选择器 -->
+          <div class="lg:col-span-1 space-y-4">
+            <div class="glass-card rounded-xl p-5 space-y-4">
+              <h3 class="font-bold text-sm text-white flex items-center justify-between">
+                <span>🎯 选择目标板块</span>
+                <span class="text-xs text-indigo-400">共 {{ nonLanguageTopics.length }} 个专区</span>
+              </h3>
+
+              <!-- 按分类展示板块按钮 -->
+              <div class="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+                
+                <!-- 官方运营与公告 -->
+                <div>
+                  <div class="text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                    <i class="fa-solid fa-bullhorn text-[10px]"></i> 官方运营与公告
+                  </div>
+                  <div class="space-y-1">
+                    <button 
+                      v-for="t in getTopicsByCategory('operations')" 
+                      :key="t.id"
+                      @click="selectHubTopic(t)"
+                      :class="selectedHubTopic?.id === t.id ? 'bg-indigo-600 text-white font-bold' : 'bg-gray-900/60 text-gray-300 hover:bg-gray-800'"
+                      class="w-full text-left px-3 py-2 rounded-lg text-xs transition flex items-center justify-between border border-gray-800">
+                      <span>{{ t.name }}</span>
+                      <span class="font-mono text-[10px] opacity-75">#{{ t.thread_id || '未设' }}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 增长与激励 -->
+                <div>
+                  <div class="text-[11px] font-bold text-amber-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                    <i class="fa-solid fa-gift text-[10px]"></i> 增长与福利激励
+                  </div>
+                  <div class="space-y-1">
+                    <button 
+                      v-for="t in getTopicsByCategory('growth')" 
+                      :key="t.id"
+                      @click="selectHubTopic(t)"
+                      :class="selectedHubTopic?.id === t.id ? 'bg-amber-600 text-white font-bold' : 'bg-gray-900/60 text-gray-300 hover:bg-gray-800'"
+                      class="w-full text-left px-3 py-2 rounded-lg text-xs transition flex items-center justify-between border border-gray-800">
+                      <span>{{ t.name }}</span>
+                      <span class="font-mono text-[10px] opacity-75">#{{ t.thread_id || '未设' }}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 社区互动与支持 -->
+                <div>
+                  <div class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                    <i class="fa-solid fa-comments text-[10px]"></i> 社区互动与支持
+                  </div>
+                  <div class="space-y-1">
+                    <button 
+                      v-for="t in getTopicsByCategory('community')" 
+                      :key="t.id"
+                      @click="selectHubTopic(t)"
+                      :class="selectedHubTopic?.id === t.id ? 'bg-emerald-600 text-white font-bold' : 'bg-gray-900/60 text-gray-300 hover:bg-gray-800'"
+                      class="w-full text-left px-3 py-2 rounded-lg text-xs transition flex items-center justify-between border border-gray-800">
+                      <span>{{ t.name }}</span>
+                      <span class="font-mono text-[10px] opacity-75">#{{ t.thread_id || '未设' }}</span>
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧：资料编辑、模板选择与发送台 -->
+          <div class="lg:col-span-2 glass-card rounded-xl p-5 space-y-4 flex flex-col">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-800 pb-3">
+              <div>
+                <span class="text-xs text-gray-400">正在发布到话题:</span>
+                <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                  <span>{{ selectedHubTopic ? selectedHubTopic.name : '请选择目标话题' }}</span>
+                  <span class="text-xs px-2 py-0.5 rounded bg-gray-800 text-indigo-400 font-mono">
+                    Thread ID: {{ selectedHubTopic?.thread_id ? '#' + selectedHubTopic.thread_id : '⚠️ 尚未绑定ID' }}
+                  </span>
+                </h3>
+              </div>
+
+              <!-- 常用模版快速填充 -->
+              <div class="flex items-center gap-1">
+                <span class="text-xs text-gray-400 mr-1">快捷模板:</span>
+                <button @click="applyTemplate('security')" class="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700 text-[11px] text-rose-300 border border-rose-500/30">
+                  🚨 安全防骗
+                </button>
+                <button @click="applyTemplate('event')" class="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700 text-[11px] text-amber-300 border border-amber-500/30">
+                  📅 活动预告
+                </button>
+                <button @click="applyTemplate('video')" class="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700 text-[11px] text-blue-300 border border-blue-500/30">
+                  🎥 视频发布
+                </button>
+                <button @click="applyTemplate('reward')" class="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700 text-[11px] text-emerald-300 border border-emerald-500/30">
+                  🎁 福利任务
+                </button>
+                <button @click="applyTemplate('app')" class="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700 text-[11px] text-purple-300 border border-purple-500/30">
+                  📱 App更新
+                </button>
+              </div>
+            </div>
+
+            <!-- 正文编辑区 -->
+            <div class="flex-1 space-y-2">
+              <label class="block text-xs font-semibold text-gray-300">
+                📝 消息内容 / 资料正文 (支持 HTML / Markdown / 链接):
+              </label>
+              <textarea 
+                v-model="hubContentText" 
+                rows="10" 
+                placeholder="在这里输入发布内容、资料简介或外部链接。也可以点击右上角的快捷模板自动填入精美格式..."
+                class="w-full glass-input rounded-lg p-3 text-xs leading-relaxed font-sans"></textarea>
+            </div>
+
+            <!-- 附件配图与操作 -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-gray-800">
+              <div class="flex items-center gap-3">
+                <label class="cursor-pointer text-xs px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 flex items-center gap-2">
+                  <i class="fa-solid fa-image text-purple-400"></i>
+                  <span>{{ hubImage ? '已选择图片: ' + hubImage.filename : '添加海报/封面图 (可选)' }}</span>
+                  <input type="file" accept="image/*" @change="handleHubImageUpload" class="hidden">
+                </label>
+                <button v-if="hubImage" @click="hubImage = null" class="text-xs text-rose-400 hover:underline">
+                  移除
+                </button>
+              </div>
+
+              <button 
+                @click="sendHubMessage" 
+                :disabled="isSendingHub || !hubContentText.trim() || !selectedHubTopic"
+                class="px-6 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg transition disabled:opacity-50 flex items-center gap-2">
+                <i v-if="isSendingHub" class="fa-solid fa-spinner animate-spin"></i>
+                <i v-else class="fa-solid fa-paper-plane"></i>
+                <span>{{ isSendingHub ? '正在投递...' : '一键发送到所选板块' }}</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 模块 3: 实时市场与行情 ================= -->
+      <section v-if="activeTab === 'markets'" class="space-y-6 max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-chart-line text-amber-400"></i>
+              实时金融市场与行情速递
+            </h2>
+            <p class="text-sm text-gray-400 mt-1">
+              一键实时拉取国际现货黄金、大宗商品及全球股指最新行情，生成结构化快讯并推送到对应话题。
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button 
+              @click="fetchMarketPreview('gold')" 
+              class="px-3.5 py-2 rounded-lg bg-amber-600/30 text-amber-300 border border-amber-500/40 text-xs font-semibold hover:bg-amber-600/50 transition flex items-center gap-1.5">
+              <span>🥇 黄金与商品</span>
+            </button>
+            <button 
+              @click="fetchMarketPreview('asia_stocks')" 
+              class="px-3.5 py-2 rounded-lg bg-blue-600/30 text-blue-300 border border-blue-500/40 text-xs font-semibold hover:bg-blue-600/50 transition flex items-center gap-1.5">
+              <span>📈 全球股票大盘</span>
+            </button>
+            <button 
+              @click="fetchMarketPreview('market_intelligence')" 
+              class="px-3.5 py-2 rounded-lg bg-purple-600/30 text-purple-300 border border-purple-500/40 text-xs font-semibold hover:bg-purple-600/50 transition flex items-center gap-1.5">
+              <span>📊 综合市场情报</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 实时数据编辑与投递卡片 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- 左侧：行情实时报价卡 -->
+          <div class="lg:col-span-1 space-y-4">
+            <div class="glass-card rounded-xl p-5 space-y-4">
+              <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                <h3 class="font-bold text-sm text-white">📡 核心标的实时监控</h3>
+                <span class="text-[10px] text-gray-400">实盘数据</span>
+              </div>
+
+              <div v-if="marketQuotes && Object.keys(marketQuotes).length > 0" class="space-y-3">
+                <div v-for="(q, key) in marketQuotes" :key="key" class="p-3 rounded-lg bg-gray-900/60 border border-gray-800 flex items-center justify-between">
+                  <div>
+                    <div class="text-xs font-bold text-gray-200 uppercase">{{ key }} ({{ q ? q.symbol : '' }})</div>
+                    <div class="text-base font-mono font-bold text-white mt-0.5">
+                      {{ q ? '$' + q.price : '暂无报价' }}
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div v-if="q" :class="q.change >= 0 ? 'text-emerald-400' : 'text-rose-400'" class="text-xs font-mono font-bold">
+                      {{ q.change >= 0 ? '+' : '' }}{{ q.change }} ({{ q.change_pct }}%)
+                    </div>
+                    <div v-if="q" class="text-[10px] text-gray-500 mt-0.5">
+                      日内: {{ q.day_low }} - {{ q.day_high }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else class="text-center py-8 text-gray-500 text-xs">
+                点击上方按钮快速拉取实时行情报价
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧：Telegram 格式化快讯预览与发送 -->
+          <div class="lg:col-span-2 glass-card rounded-xl p-5 space-y-4 flex flex-col">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-800 pb-3">
+              <div>
+                <h3 class="font-bold text-base text-white">📱 Telegram 快讯排版预览与修改</h3>
+                <p class="text-xs text-gray-400">已按 Telegram 官方 HTML 格式美化排版，支持在此直接输入独家点评</p>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <select v-model="selectedMarketTopicId" class="glass-input rounded px-2.5 py-1.5 text-xs">
+                  <option v-for="t in marketTopics" :key="t.id" :value="t.id">
+                    发送到: {{ t.name }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 编辑框 (纯文本极简金融终端模式) -->
+            <div class="flex-1 space-y-2">
+              <textarea 
+                v-model="marketTelegramText" 
+                rows="13" 
+                placeholder="点击上方拉取按钮，系统将自动生成格式精美的纯英文专业市场简报..."
+                class="w-full glass-input rounded-lg p-3 text-xs font-mono resize-y leading-relaxed"></textarea>
+            </div>
+
+            <!-- 底部发送按钮 -->
+            <div class="flex items-center justify-between pt-2 border-t border-gray-800">
+              <span class="text-xs text-gray-400">
+                目标话题 Thread ID: <code class="text-indigo-300 font-mono">{{ getTargetThreadId(selectedMarketTopicId) || '未设置' }}</code>
+              </span>
+
+              <button 
+                @click="sendMarketReport" 
+                :disabled="isSendingMarket || !marketTelegramText.trim()"
+                class="px-6 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md transition disabled:opacity-50 flex items-center gap-2">
+                <i v-if="isSendingMarket" class="fa-solid fa-spinner animate-spin"></i>
+                <i v-else class="fa-solid fa-paper-plane"></i>
+                <span>{{ isSendingMarket ? '正在发送...' : '发送到市场话题' }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 模块 4: 定时任务调度 ================= -->
+      <section v-if="activeTab === 'scheduler'" class="space-y-6 max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-clock text-emerald-400"></i>
+              定时自动化任务管理 (Time Scheduler)
+            </h2>
+            <p class="text-sm text-gray-400 mt-1">
+              设定时间点，系统后台自动在设定时间拉取最新市场数据并发送到对应群话题，无需人工值守。
+            </p>
+          </div>
+
+          <button 
+            @click="saveSchedules" 
+            class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>保存定时规则</span>
+          </button>
+        </div>
+
+        <!-- 任务列表 -->
+        <div class="glass-card rounded-xl divide-y divide-gray-800">
+          <div v-for="sched in config.schedules" :key="sched.id" class="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="space-y-1 flex-1">
+              <div class="flex items-center gap-3">
+                <span class="font-bold text-base text-white">{{ sched.name }}</span>
+                <span class="text-xs px-2 py-0.5 rounded-full" :class="sched.enabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-800 text-gray-500'">
+                  {{ sched.enabled ? '运行中' : '已暂停' }}
+                </span>
+              </div>
+              <p class="text-xs text-gray-400">{{ sched.description }}</p>
+              <div class="flex items-center gap-4 text-xs font-mono text-gray-400 pt-1">
+                <span>Cron: <code class="text-indigo-400">{{ sched.cron }}</code></span>
+                <span>目标话题: <code class="text-amber-400">{{ getTopicNameById(sched.target_topic_id) }}</code></span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <!-- 开关 -->
+              <label class="flex items-center cursor-pointer">
+                <input type="checkbox" v-model="sched.enabled" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                <span class="ml-2 text-xs text-gray-300">{{ sched.enabled ? '已开启' : '关闭' }}</span>
+              </label>
+
+              <!-- 立即触发一次 -->
+              <button 
+                @click="triggerScheduleNow(sched.id)" 
+                class="px-3 py-1.5 rounded bg-gray-800 hover:bg-gray-700 text-xs text-gray-200 border border-gray-700 transition flex items-center gap-1">
+                <i class="fa-solid fa-play text-emerald-400"></i>
+                <span>立即测试执行</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 执行日志 -->
+        <div class="glass-card rounded-xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm text-white">📜 任务执行历史日志</h3>
+            <button @click="loadSchedulerLogs" class="text-xs text-indigo-400 hover:underline">刷新日志</button>
+          </div>
+
+          <div class="overflow-x-auto max-h-64">
+            <table class="w-full text-left text-xs">
+              <thead class="text-gray-400 bg-gray-900/50">
+                <tr>
+                  <th class="p-2.5">时间</th>
+                  <th class="p-2.5">任务名称</th>
+                  <th class="p-2.5">状态</th>
+                  <th class="p-2.5">执行详情</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-800 font-mono">
+                <tr v-for="(log, idx) in schedulerLogs" :key="idx" class="hover:bg-gray-800/30">
+                  <td class="p-2.5 text-gray-400">{{ log.time }}</td>
+                  <td class="p-2.5 text-white">{{ log.schedule_name }}</td>
+                  <td class="p-2.5">
+                    <span :class="log.status === 'success' ? 'text-emerald-400' : (log.status === 'failed' ? 'text-rose-400' : 'text-amber-400')">
+                      {{ log.status }}
+                    </span>
+                  </td>
+                  <td class="p-2.5 text-gray-300 truncate max-w-md">{{ log.detail }}</td>
+                </tr>
+                <tr v-if="schedulerLogs.length === 0">
+                  <td colspan="4" class="p-4 text-center text-gray-500 font-sans">暂无执行记录</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 模块 5: 话题与配置绑定 ================= -->
+      <section v-if="activeTab === 'settings'" class="space-y-6 max-w-6xl mx-auto">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-sliders text-blue-400"></i>
+              Telegram 全社区话题 Thread ID 绑定
+            </h2>
+            <p class="text-sm text-gray-400 mt-1">
+              配置你的 Telegram Bot Token、超级群 Chat ID，以及全部 {{ config.topics?.length }} 个话题对应的 Topic ID。
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- Telegram 基础连接设置 -->
+          <div class="glass-card rounded-xl p-5 space-y-4">
+            <h3 class="font-bold text-base text-white border-b border-gray-800 pb-2 flex items-center gap-2">
+              <i class="fa-brands fa-telegram text-blue-400"></i>
+              Telegram 机器人设置
+            </h3>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-300 mb-1">Telegram Bot Token:</label>
+              <input 
+                type="password" 
+                v-model="tempTelegram.bot_token" 
+                placeholder="例如: 7123456789:AAHq_ABCdef..." 
+                class="w-full glass-input rounded-lg px-3 py-2 text-xs font-mono">
+              <p class="text-[11px] text-gray-500 mt-1">
+                在 Telegram 搜索 <code>@BotFather</code> 发送 <code>/newbot</code> 获取。
+              </p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-300 mb-1">超级群 Chat ID (通常为负数):</label>
+              <input 
+                type="text" 
+                v-model="tempTelegram.chat_id" 
+                placeholder="例如: -1001234567890" 
+                class="w-full glass-input rounded-lg px-3 py-2 text-xs font-mono">
+              <p class="text-[11px] text-gray-500 mt-1">
+                把 Bot 拉进 <code>SPARK ONE Global Community</code> 大群，并设为管理员。
+              </p>
+            </div>
+
+            <div class="flex items-center justify-between pt-2">
+              <button 
+                @click="saveTelegramConfig" 
+                :disabled="isVerifyingBot"
+                class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition flex items-center gap-2">
+                <i v-if="isVerifyingBot" class="fa-solid fa-spinner animate-spin"></i>
+                <span>{{ isVerifyingBot ? '验证中...' : '保存并测试连接' }}</span>
+              </button>
+
+              <button 
+                @click="autoDetectTopics" 
+                :disabled="isDetectingTopics"
+                class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition flex items-center gap-2">
+                <i v-if="isDetectingTopics" class="fa-solid fa-spinner animate-spin"></i>
+                <i v-else class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>自动侦测群内 Topics</span>
+              </button>
+            </div>
+
+            <div v-if="detectResult" class="p-3 rounded bg-gray-900/80 border border-gray-700 text-xs space-y-2">
+              <div class="font-bold text-gray-200">🔍 侦测结果:</div>
+              <div v-if="detectResult.detected_topics && detectResult.detected_topics.length > 0" class="space-y-1">
+                <div v-for="t in detectResult.detected_topics" :key="t.thread_id" class="flex items-center justify-between text-gray-300 font-mono">
+                  <span>{{ t.topic_name }}</span>
+                  <span class="text-indigo-400">Thread ID: {{ t.thread_id }}</span>
+                </div>
+              </div>
+              <div v-else class="text-gray-400 text-[11px]">
+                💡 提示：将 Bot 设为群管理员后，在群里任意 Topic 话题发一条消息（如 "test"），然后再点击此按钮，即可自动捕获该 Topic 的 Thread ID！
+              </div>
+            </div>
+          </div>
+
+          <!-- 翻译引擎设置 -->
+          <div class="glass-card rounded-xl p-5 space-y-4">
+            <h3 class="font-bold text-base text-white border-b border-gray-800 pb-2 flex items-center gap-2">
+              <i class="fa-solid fa-language text-purple-400"></i>
+              翻译引擎配置
+            </h3>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-300 mb-1">首选翻译服务:</label>
+              <select v-model="tempTranslation.engine" class="w-full glass-input rounded-lg px-3 py-2 text-xs">
+                <option value="built-in">内置免费翻译 (免 Key，开箱即用)</option>
+                <option value="gemini">Google Gemini AI (推荐: 翻译地道自然)</option>
+                <option value="openai">OpenAI (ChatGPT / GPT-4o-mini)</option>
+                <option value="deepl">DeepL 翻译 API</option>
+              </select>
+            </div>
+
+            <div v-if="tempTranslation.engine !== 'built-in'">
+              <label class="block text-xs font-semibold text-gray-300 mb-1">API Key:</label>
+              <input 
+                type="password" 
+                v-model="tempTranslation.api_key" 
+                placeholder="输入对应平台的 API Key..." 
+                class="w-full glass-input rounded-lg px-3 py-2 text-xs font-mono">
+            </div>
+
+            <div v-if="tempTranslation.engine === 'gemini' || tempTranslation.engine === 'openai'">
+              <label class="block text-xs font-semibold text-gray-300 mb-1">AI 模型名称:</label>
+              <input 
+                type="text" 
+                v-model="tempTranslation.model" 
+                placeholder="gemini-1.5-flash 或 gpt-4o-mini" 
+                class="w-full glass-input rounded-lg px-3 py-2 text-xs font-mono">
+            </div>
+
+            <div class="pt-2">
+              <button 
+                @click="saveTranslationConfig" 
+                class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition">
+                保存翻译配置
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 话题映射管理表格 -->
+        <div class="glass-card rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-base text-white">📑 全社区所有板块与话题绑定表 ({{ config.topics?.length }} 个)</h3>
+              <p class="text-xs text-gray-400">填入每个 Topic 在群中的 Thread ID，广播时就会精准投递到该话题下。</p>
+            </div>
+
+            <button 
+              @click="saveTopicsConfig" 
+              class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center gap-2">
+              <i class="fa-solid fa-floppy-disk"></i>
+              <span>保存话题绑定关系</span>
+            </button>
+          </div>
+
+          <div class="overflow-x-auto max-h-[600px]">
+            <table class="w-full text-left text-xs">
+              <thead class="text-gray-400 bg-gray-900/80 uppercase text-[10px] tracking-wider sticky top-0">
+                <tr>
+                  <th class="p-3">启用</th>
+                  <th class="p-3">分类</th>
+                  <th class="p-3">话题名称 (Topic Name)</th>
+                  <th class="p-3">目标语言代码</th>
+                  <th class="p-3">Thread ID (话题ID)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-800">
+                <tr v-for="topic in config.topics" :key="topic.id" class="hover:bg-gray-800/40 transition">
+                  <td class="p-3">
+                    <input type="checkbox" v-model="topic.enabled" class="rounded bg-gray-800 border-gray-700 text-indigo-600 focus:ring-0">
+                  </td>
+                  <td class="p-3">
+                    <span 
+                      :class="{
+                        'bg-indigo-500/20 text-indigo-300': topic.category === 'language',
+                        'bg-amber-500/20 text-amber-300': topic.category === 'market',
+                        'bg-rose-500/20 text-rose-300': topic.category === 'operations',
+                        'bg-purple-500/20 text-purple-300': topic.category === 'growth',
+                        'bg-emerald-500/20 text-emerald-300': topic.category === 'community'
+                      }" 
+                      class="px-2 py-0.5 rounded text-[10px] font-semibold">
+                      {{ topic.category_name || topic.category }}
+                    </span>
+                  </td>
+                  <td class="p-3 font-semibold text-white">
+                    {{ topic.name }}
+                  </td>
+                  <td class="p-3 text-gray-300 font-mono">
+                    <input 
+                      v-if="topic.category === 'language'" 
+                      type="text" 
+                      v-model="topic.target_lang" 
+                      class="w-16 glass-input rounded px-2 py-1 text-xs">
+                    <span v-else class="text-gray-500">-</span>
+                  </td>
+                  <td class="p-3">
+                    <div class="flex items-center gap-2">
+                      <span class="text-gray-500">#</span>
+                      <input 
+                        type="number" 
+                        v-model="topic.thread_id" 
+                        placeholder="留空为默认" 
+                        class="w-32 glass-input rounded px-2 py-1 text-xs font-mono">
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    const { createApp, ref, computed, onMounted } = Vue;
+
+    createApp({
+      setup() {
+        const activeTab = ref('broadcast');
+        const config = ref({ telegram: {}, translation: {}, topics: [], schedules: [] });
+        const botInfo = ref({});
+        
+        // 广播模块状态
+        const broadcastText = ref('');
+        const selectedTopicIds = ref([]);
+        const uploadedImage = ref(null);
+        const isTranslating = ref(false);
+        const isSending = ref(false);
+        const translatedCards = ref([]);
+
+        // 社区板块直发模块状态
+        const selectedHubTopic = ref(null);
+        const hubContentText = ref('');
+        const hubImage = ref(null);
+        const isSendingHub = ref(false);
+
+        // 市场模块状态
+        const selectedMarketTopicId = ref('market_gold');
+        const marketTelegramText = ref('');
+        const marketQuotes = ref({});
+        const marketPosterUrl = ref('');
+        const marketPosterFilename = ref('');
+        const includeMarketPoster = ref(true);
+        const isSendingMarket = ref(false);
+
+        // 定时模块状态
+        const schedulerLogs = ref([]);
+
+        // 设置模块状态
+        const tempTelegram = ref({ bot_token: '', chat_id: '' });
+        const tempTranslation = ref({ engine: 'built-in', api_key: '', model: '' });
+        const isVerifyingBot = ref(false);
+        const isDetectingTopics = ref(false);
+        const detectResult = ref(null);
+
+        // 计算属性
+        const languageTopics = computed(() => {
+          return (config.value.topics || []).filter(t => t.category === 'language');
+        });
+
+        const nonLanguageTopics = computed(() => {
+          return (config.value.topics || []).filter(t => t.category !== 'language');
+        });
+
+        const marketTopics = computed(() => {
+          return (config.value.topics || []).filter(t => t.category === 'market');
+        });
+
+        const activeScheduleCount = computed(() => {
+          return (config.value.schedules || []).filter(s => s.enabled).length;
+        });
+
+        const getTopicsByCategory = (cat) => {
+          return (config.value.topics || []).filter(t => t.category === cat);
+        };
+
+        const selectHubTopic = (t) => {
+          selectedHubTopic.value = t;
+        };
+
+        // 快捷专业英文模板库 (English Professional Templates)
+        const applyTemplate = (type) => {
+          if (type === 'security') {
+            hubContentText.value = 
+`🚨 <b>SPARK ONE • Official Security & Anti-Phishing Alert</b>
+
+⚠️ <b>CRITICAL SAFETY REMINDER:</b>
+Beware of scammers and impersonators posing as official SparkOne team members!
+
+1️⃣ <b>OFFICIAL STAFF WILL NEVER DM YOU FIRST TO ASK FOR PRIVATE KEYS, SEED PHRASES, OR FUNDS!</b>
+2️⃣ Official verified portal & apps: <code>https://sparkone.io</code>
+3️⃣ Always verify contract addresses and beware of fake support bots. Report any suspicious DMs immediately to the community mod team!
+
+🛡️ <i>Stay vigilant. Your security and assets always come first!</i>
+#SecurityAlert #SparkOne #SafetyFirst #NeverDmFirst`;
+          } else if (type === 'event') {
+            hubContentText.value =
+`📅 <b>SPARK ONE • Global Community Event & AMA Announcement</b>
+
+🎉 <b>Theme:</b> SparkOne Ecosystem Milestones & Global Q4 Roadmap AMA
+⏰ <b>Time:</b> This Friday at 12:00 PM (UTC) / 20:00 (UTC+8)
+🎙️ <b>Featured Speakers:</b> Core Tech Architects & Global Growth Leads
+📍 <b>Location:</b> Official Telegram Voice Space
+
+🎁 <b>Exclusive Perks:</b>
+• Active live participants will share an exclusive rewards pool!
+• First look at upcoming community campaigns and airdrop criteria!
+
+👉 <i>Set your reminders now! Don't miss out!</i>
+#SparkEvent #LiveAMA #Web3 #Community`;
+          } else if (type === 'video') {
+            hubContentText.value =
+`🎥 <b>SPARK ONE • Featured Video & Tutorial Release</b>
+
+🎬 <b>Title:</b> 3-Minute Masterclass: Navigating SparkOne Multi-Chain Features & Yields
+📺 <b>Watch Now on YouTube:</b> <code>https://youtube.com/watch?v=...</code>
+
+📌 <b>Episode Highlights:</b>
+• Complete walkthrough of the newly revamped UI architecture;
+• Step-by-step onboarding guide to daily tasks & rewards;
+• Pro security tips for tokenized asset management.
+
+💡 <i>Like, Share, and Subscribe to our official channels!</i>
+#VideoCenter #Tutorial #SparkOne #FinTech`;
+          } else if (type === 'reward') {
+            hubContentText.value =
+`🎁 <b>SPARK ONE • Community Pioneer Rewards Campaign Season 1</b>
+
+🎯 <b>Mission:</b> Empowering Global Community Growth & Engagement
+⏳ <b>Campaign Duration:</b> Active until the end of this month
+
+📋 <b>How to Participate:</b>
+1. Daily check-in and active discussion across national language topics;
+2. Invite friends to explore the SparkOne ecosystem & official dApp;
+3. Submit constructive feedback to unlock exclusive early-supporter tier rewards!
+
+💰 <b>Reward Distribution:</b> Distributed within 3 business days post-campaign.
+🔗 <b>Full Terms & Guidelines:</b> <code>https://sparkone.io/rewards</code>
+
+#Rewards #Airdrop #Missions #Growth`;
+          } else if (type === 'app') {
+            hubContentText.value =
+`📱 <b>SPARK ONE APP • Official New Release (v2.1.0)</b>
+
+🚀 <b>Version:</b> v2.1.0 (iOS & Android)
+🌟 <b>What's New in this Build:</b>
+• ⚡ 40% faster engine response & data streaming;
+• 🌐 Comprehensive multi-language localization & custom push alerts;
+• 🛡️ Enhanced cryptographic vault protection & anti-phishing safeguards;
+• 🐞 General performance enhancements and bug fixes.
+
+📲 <b>Download Channels:</b>
+👉 Official Portal: <code>https://sparkone.io/download</code>
+👉 Google Play / TestFlight
+
+#AppUpdate #SparkOneApp #NewRelease #FinTech`;
+          }
+        };
+
+        // 资料直发图片上传
+        const handleHubImageUpload = async (event) => {
+          const file = event.target.files[0];
+          if (!file) return;
+          const formData = new FormData();
+          formData.append('file', file);
+          try {
+            const res = await fetch('/api/upload_image', {
+              method: 'POST',
+              body: formData
+            });
+            const data = await res.json();
+            if (data.success) {
+              hubImage.value = data;
+            }
+          } catch (e) {
+            alert('上传图片失败: ' + e);
+          }
+        };
+
+        // 发送资料到所选板块
+        const sendHubMessage = async () => {
+          if (!config.value.telegram?.bot_token || !config.value.telegram?.chat_id) {
+            alert('请先在【话题绑定与配置】中配置 Telegram Bot Token 和群组 Chat ID！');
+            activeTab.value = 'settings';
+            return;
+          }
+          if (!selectedHubTopic.value) {
+            alert('请先在左侧选择一个目标板块！');
+            return;
+          }
+
+          isSendingHub.value = true;
+          try {
+            const res = await fetch('/api/broadcast/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                items: [{
+                  topic_id: selectedHubTopic.value.id,
+                  thread_id: selectedHubTopic.value.thread_id ? parseInt(selectedHubTopic.value.thread_id) : null,
+                  text: hubContentText.value
+                }],
+                image_filename: hubImage.value ? hubImage.value.filename : null
+              })
+            });
+            const data = await res.json();
+            if (data.success && data.results[0]?.success) {
+              alert(`🎉 成功投递到 【${selectedHubTopic.value.name}】！`);
+              hubContentText.value = '';
+              hubImage.value = null;
+            } else {
+              alert('发送失败: ' + (data.results[0]?.error || '未知原因'));
+            }
+          } catch (e) {
+            alert('发送异常: ' + e);
+          } finally {
+            isSendingHub.value = false;
+          }
+        };
+
+        // 辅助方法
+        const getTopicNameById = (id) => {
+          const t = config.value.topics.find(x => x.id === id);
+          return t ? t.name : id;
+        };
+
+        const getTargetThreadId = (id) => {
+          const t = config.value.topics.find(x => x.id === id);
+          return t ? t.thread_id : null;
+        };
+
+        const selectAllTopics = (select) => {
+          if (select) {
+            selectedTopicIds.value = languageTopics.value.map(t => t.id);
+          } else {
+            selectedTopicIds.value = [];
+          }
+        };
+
+        const toggleTopicSelection = (id) => {
+          const idx = selectedTopicIds.value.indexOf(id);
+          if (idx > -1) {
+            selectedTopicIds.value.splice(idx, 1);
+          } else {
+            selectedTopicIds.value.push(id);
+          }
+        };
+
+        const insertEmoji = (emoji) => {
+          broadcastText.value += emoji;
+        };
+
+        // 加载配置
+        const loadConfig = async () => {
+          try {
+            const res = await fetch('/api/config');
+            const data = await res.json();
+            config.value = data;
+            
+            tempTelegram.value = { ...data.telegram };
+            tempTranslation.value = { ...data.translation };
+            
+            // 默认勾选全部启用的语言话题
+            selectedTopicIds.value = data.topics
+              .filter(t => t.category === 'language' && t.enabled)
+              .map(t => t.id);
+
+            // 默认选中一个板块
+            const firstNonLang = data.topics.find(t => t.category !== 'language');
+            if (firstNonLang) {
+              selectedHubTopic.value = firstNonLang;
+            }
+
+            // 如果已有 token，验证一次
+            if (data.telegram?.bot_token) {
+              verifyBotQuick(data.telegram.bot_token);
+            }
+          } catch (e) {
+            console.error('加载配置失败:', e);
+          }
+        };
+
+        const verifyBotQuick = async (token) => {
+          try {
+            const res = await fetch('/api/config/telegram', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ bot_token: token, chat_id: config.value.telegram?.chat_id || '' })
+            });
+            const data = await res.json();
+            if (data.verification?.success) {
+              botInfo.value = data.verification.bot;
+            }
+          } catch (e) {
+            console.error('Bot 验证异常:', e);
+          }
+        };
+
+        // 广播处理：一键翻译
+        const handleTranslateAll = async () => {
+          if (!broadcastText.value.trim()) return;
+          isTranslating.value = true;
+          try {
+            const res = await fetch('/api/broadcast/translate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                text: broadcastText.value,
+                target_topic_ids: selectedTopicIds.value
+              })
+            });
+            const data = await res.json();
+            if (data.success) {
+              translatedCards.value = data.results.map(r => ({
+                ...r,
+                send_status: 'ready',
+                error_msg: ''
+              }));
+            } else {
+              alert('翻译失败: ' + (data.detail || '未知错误'));
+            }
+          } catch (e) {
+            alert('翻译请求失败: ' + e);
+          } finally {
+            isTranslating.value = false;
+          }
+        };
+
+        // 上传配图
+        const handleImageUpload = async (event) => {
+          const file = event.target.files[0];
+          if (!file) return;
+          const formData = new FormData();
+          formData.append('file', file);
+          try {
+            const res = await fetch('/api/upload_image', {
+              method: 'POST',
+              body: formData
+            });
+            const data = await res.json();
+            if (data.success) {
+              uploadedImage.value = data;
+            }
+          } catch (e) {
+            alert('上传图片失败: ' + e);
+          }
+        };
+
+        // 一键发送所有卡片
+        const handleSendAllBroadcast = async () => {
+          if (!config.value.telegram?.bot_token || !config.value.telegram?.chat_id) {
+            alert('请先在【话题绑定与配置】中填写 Telegram Bot Token 和群组 Chat ID！');
+            activeTab.value = 'settings';
+            return;
+          }
+          if (translatedCards.value.length === 0) return;
+
+          isSending.value = true;
+          try {
+            const items = translatedCards.value.map(c => ({
+              topic_id: c.topic_id,
+              thread_id: c.thread_id ? parseInt(c.thread_id) : null,
+              text: c.translated_text
+            }));
+
+            const res = await fetch('/api/broadcast/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                items: items,
+                image_filename: uploadedImage.value ? uploadedImage.value.filename : null
+              })
+            });
+            const data = await res.json();
+            if (data.success) {
+              data.results.forEach(r => {
+                const target = translatedCards.value.find(c => c.topic_id === r.topic_id);
+                if (target) {
+                  target.send_status = r.success ? 'success' : 'error';
+                  target.error_msg = r.error || '';
+                }
+              });
+              alert('批量分发完成！请查看卡片状态');
+            } else {
+              alert('分发失败: ' + (data.detail || '未知错误'));
+            }
+          } catch (e) {
+            alert('发送失败: ' + e);
+          } finally {
+            isSending.value = false;
+          }
+        };
+
+        const handleSendSingle = async (card) => {
+          try {
+            const res = await fetch('/api/broadcast/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                items: [{
+                  topic_id: card.topic_id,
+                  thread_id: card.thread_id ? parseInt(card.thread_id) : null,
+                  text: card.translated_text
+                }],
+                image_filename: uploadedImage.value ? uploadedImage.value.filename : null
+              })
+            });
+            const data = await res.json();
+            if (data.results && data.results[0]) {
+              card.send_status = data.results[0].success ? 'success' : 'error';
+              card.error_msg = data.results[0].error || '';
+              if (data.results[0].success) {
+                alert('重发成功！');
+              } else {
+                alert('发送失败: ' + data.results[0].error);
+              }
+            }
+          } catch (e) {
+            alert('重发异常: ' + e);
+          }
+        };
+
+        // 市场模块：拉取数据预览
+        const fetchMarketPreview = async (type) => {
+          try {
+            const res = await fetch(`/api/market/data/${type}`);
+            const data = await res.json();
+            marketTelegramText.value = data.telegram_message || '';
+            marketQuotes.value = data.quotes || {};
+            marketPosterUrl.value = data.poster_url || '';
+            marketPosterFilename.value = data.poster_filename || '';
+
+            if (type === 'gold') {
+              selectedMarketTopicId.value = 'market_gold';
+            } else if (type === 'asia_stocks' || type === 'us_stocks' || type === 'global_stocks') {
+              selectedMarketTopicId.value = 'market_global';
+            } else {
+              selectedMarketTopicId.value = 'market_intelligence';
+            }
+          } catch (e) {
+            alert('获取市场数据失败: ' + e);
+          }
+        };
+
+        // 发送市场简报
+        const sendMarketReport = async () => {
+          if (!config.value.telegram?.bot_token || !config.value.telegram?.chat_id) {
+            alert('请先在【话题绑定与配置】中配置 Telegram Bot Token 和群组 Chat ID！');
+            activeTab.value = 'settings';
+            return;
+          }
+          isSendingMarket.value = true;
+          try {
+            const threadId = getTargetThreadId(selectedMarketTopicId.value);
+            const res = await fetch('/api/market/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                topic_id: selectedMarketTopicId.value,
+                thread_id: threadId ? parseInt(threadId) : null,
+                text: marketTelegramText.value,
+                poster_filename: includeMarketPoster.value ? marketPosterFilename.value : null
+              })
+            });
+            const data = await res.json();
+            if (data.success) {
+              alert('市场简报与高清海报已成功推送到群话题！');
+            } else {
+              alert('推送失败: ' + (data.error || '未知原因'));
+            }
+          } catch (e) {
+            alert('发送异常: ' + e);
+          } finally {
+            isSendingMarket.value = false;
+          }
+        };
+
+        // 定时任务保存
+        const saveSchedules = async () => {
+          try {
+            const res = await fetch('/api/config/schedules', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(config.value.schedules)
+            });
+            const data = await res.json();
+            if (data.success) {
+              alert('定时任务规则保存成功，调度器已重新装载！');
+            }
+          } catch (e) {
+            alert('保存定时任务失败: ' + e);
+          }
+        };
+
+        const triggerScheduleNow = async (id) => {
+          try {
+            const res = await fetch(`/api/scheduler/trigger/${id}`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+              alert('已立即触发执行！结果: ' + (data.detail || data.message || '成功'));
+            } else {
+              alert('执行反馈: ' + (data.error || '失败'));
+            }
+            loadSchedulerLogs();
+          } catch (e) {
+            alert('触发异常: ' + e);
+          }
+        };
+
+        const loadSchedulerLogs = async () => {
+          try {
+            const res = await fetch('/api/scheduler/logs');
+            schedulerLogs.value = await res.json();
+          } catch (e) {
+            console.error('获取日志失败:', e);
+          }
+        };
+
+        // 配置保存：Telegram
+        const saveTelegramConfig = async () => {
+          isVerifyingBot.value = true;
+          try {
+            const res = await fetch('/api/config/telegram', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(tempTelegram.value)
+            });
+            const data = await res.json();
+            config.value = data.config;
+            if (data.verification?.success) {
+              botInfo.value = data.verification.bot;
+              alert(`连接成功！Bot 用户名: @${data.verification.bot.username}`);
+            } else {
+              alert('保存成功，但 Bot 验证失败: ' + (data.verification?.error || 'Token 无效'));
+            }
+          } catch (e) {
+            alert('保存异常: ' + e);
+          } finally {
+            isVerifyingBot.value = false;
+          }
+        };
+
+        // 自动侦测 Topics
+        const autoDetectTopics = async () => {
+          isDetectingTopics.value = true;
+          try {
+            const res = await fetch('/api/telegram/detect', { method: 'POST' });
+            const data = await res.json();
+            detectResult.value = data;
+            if (data.detected_chats && data.detected_chats.length > 0 && !tempTelegram.value.chat_id) {
+              tempTelegram.value.chat_id = data.detected_chats[0].id;
+            }
+          } catch (e) {
+            alert('自动侦测请求失败: ' + e);
+          } finally {
+            isDetectingTopics.value = false;
+          }
+        };
+
+        // 配置保存：翻译
+        const saveTranslationConfig = async () => {
+          try {
+            const res = await fetch('/api/config/translation', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(tempTranslation.value)
+            });
+            const data = await res.json();
+            config.value = data.config;
+            alert('翻译设置已保存！');
+          } catch (e) {
+            alert('保存异常: ' + e);
+          }
+        };
+
+        // 配置保存：话题绑定
+        const saveTopicsConfig = async () => {
+          try {
+            const res = await fetch('/api/config/topics', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(config.value.topics)
+            });
+            const data = await res.json();
+            if (data.success) {
+              alert('话题 Thread ID 绑定已保存！');
+            }
+          } catch (e) {
+            alert('保存异常: ' + e);
+          }
+        };
+
+        onMounted(() => {
+          loadConfig();
+          loadSchedulerLogs();
+        });
+
+        return {
+          activeTab,
+          config,
+          botInfo,
+          broadcastText,
+          selectedTopicIds,
+          uploadedImage,
+          isTranslating,
+          isSending,
+          translatedCards,
+          selectedHubTopic,
+          hubContentText,
+          hubImage,
+          isSendingHub,
+          selectedMarketTopicId,
+          marketTelegramText,
+          marketQuotes,
+          isSendingMarket,
+          schedulerLogs,
+          tempTelegram,
+          tempTranslation,
+          isVerifyingBot,
+          isDetectingTopics,
+          detectResult,
+          languageTopics,
+          nonLanguageTopics,
+          marketTopics,
+          activeScheduleCount,
+          getTopicsByCategory,
+          selectHubTopic,
+          applyTemplate,
+          handleHubImageUpload,
+          sendHubMessage,
+          getTopicNameById,
+          getTargetThreadId,
+          selectAllTopics,
+          toggleTopicSelection,
+          insertEmoji,
+          handleTranslateAll,
+          handleImageUpload,
+          handleSendAllBroadcast,
+          handleSendSingle,
+          fetchMarketPreview,
+          sendMarketReport,
+          saveSchedules,
+          triggerScheduleNow,
+          loadSchedulerLogs,
+          saveTelegramConfig,
+          autoDetectTopics,
+          saveTranslationConfig,
+          saveTopicsConfig
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

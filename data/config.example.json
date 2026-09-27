@@ -1,0 +1,336 @@
+{
+  "telegram": {
+    "bot_token": "YOUR_TELEGRAM_BOT_TOKEN_HERE",
+    "chat_id": "YOUR_SUPERGROUP_CHAT_ID_HERE"
+  },
+  "translation": {
+    "engine": "built-in",
+    "api_key": "",
+    "model": "gemini-1.5-flash",
+    "prompt_template": "You are a professional translator for SparkOne. Translate the following text into {target_lang_name} ({target_lang_code}). Keep emojis, markdown formatting, links, and hashtags intact. Translate naturally for a crypto/financial/tech community audience. Output ONLY the translated text without extra explanation."
+  },
+  "topics": [
+    {
+      "id": "lang_en",
+      "name": "🇬🇧 SPARK ONE English",
+      "category": "language",
+      "category_name": "多语言国家区",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "lang_zh",
+      "name": "🇨🇳 SPARK ONE Chinese",
+      "category": "language",
+      "category_name": "多语言国家区",
+      "target_lang": "zh",
+      "target_lang_name": "Simplified Chinese",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "lang_ar",
+      "name": "🇦🇪 SPARK ONE Arabic",
+      "category": "language",
+      "category_name": "多语言国家区",
+      "target_lang": "ar",
+      "target_lang_name": "Arabic",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "lang_pt",
+      "name": "🇵🇹 SPARK ONE Portuguese",
+      "category": "language",
+      "category_name": "多语言国家区",
+      "target_lang": "pt",
+      "target_lang_name": "Portuguese",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "lang_es",
+      "name": "🇪🇸 SPARK ONE Spanish",
+      "category": "language",
+      "category_name": "多语言国家区",
+      "target_lang": "es",
+      "target_lang_name": "Spanish",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "lang_ms",
+      "name": "🇲🇾 SPARK ONE Malaysia",
+      "category": "language",
+      "category_name": "多语言国家区",
+      "target_lang": "ms",
+      "target_lang_name": "Malay",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "lang_id",
+      "name": "🇮🇩 SPARK ONE Indonesian",
+      "category": "language",
+      "category_name": "多语言国家区",
+      "target_lang": "id",
+      "target_lang_name": "Indonesian",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "lang_th",
+      "name": "🇹🇭 SPARK ONE Thai",
+      "category": "language",
+      "category_name": "多语言国家区",
+      "target_lang": "th",
+      "target_lang_name": "Thai",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "lang_vi",
+      "name": "🇻🇳 SPARK ONE Vietnamese",
+      "category": "language",
+      "category_name": "多语言国家区",
+      "target_lang": "vi",
+      "target_lang_name": "Vietnamese",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "lang_ja",
+      "name": "🇯🇵 SPARK ONE Japanese",
+      "category": "language",
+      "category_name": "多语言国家区",
+      "target_lang": "ja",
+      "target_lang_name": "Japanese",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "lang_ko",
+      "name": "🇰🇷 SPARK ONE Korean",
+      "category": "language",
+      "category_name": "多语言国家区",
+      "target_lang": "ko",
+      "target_lang_name": "Korean",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "market_gold",
+      "name": "🥇 GOLD MARKET",
+      "category": "market",
+      "category_name": "金融市场区",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": 7,
+      "enabled": true
+    },
+    {
+      "id": "market_global",
+      "name": "📈 GLOBAL MARKETS US stocks, Asia...",
+      "category": "market",
+      "category_name": "金融市场区",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": 8,
+      "enabled": true
+    },
+    {
+      "id": "market_intelligence",
+      "name": "📊 MARKET INTELLIGENCE",
+      "category": "market",
+      "category_name": "金融市场区",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "sec_alerts",
+      "name": "🚨 SECURITY ALERTS",
+      "category": "operations",
+      "category_name": "官方运营与公告",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "feedback_ideas",
+      "name": "💡 FEEDBACK & IDEAS",
+      "category": "community",
+      "category_name": "社区互动与支持",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "general_chat",
+      "name": "💬 GENERAL CHAT",
+      "category": "community",
+      "category_name": "社区互动与支持",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "help_center",
+      "name": "🛟 HELP CENTER",
+      "category": "community",
+      "category_name": "社区互动与支持",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "spark_charity",
+      "name": "💜 SPARK CHARITY",
+      "category": "growth",
+      "category_name": "增长与激励",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "partnership",
+      "name": "🤝 PARTNERSHIP",
+      "category": "growth",
+      "category_name": "增长与激励",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "rewards_benefits",
+      "name": "🎁 REWARDS & BENEFITS",
+      "category": "growth",
+      "category_name": "增长与激励",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "missions_campaigns",
+      "name": "🎯 MISSIONS & CAMPAIGNS",
+      "category": "growth",
+      "category_name": "增长与激励",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "membership_growth",
+      "name": "🏆 MEMBERSHIP & GROWTH",
+      "category": "growth",
+      "category_name": "增长与激励",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "global_community",
+      "name": "🌍 GLOBAL COMMUNITY",
+      "category": "community",
+      "category_name": "社区互动与支持",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "events_live",
+      "name": "📅 EVENTS & LIVE",
+      "category": "operations",
+      "category_name": "官方运营与公告",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "video_center",
+      "name": "🎥 VIDEO CENTER",
+      "category": "operations",
+      "category_name": "官方运营与公告",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "spark_academy",
+      "name": "🧠 SPARK ACADEMY",
+      "category": "operations",
+      "category_name": "官方运营与公告",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "spark_one_app",
+      "name": "📱 SPARK ONE APP",
+      "category": "operations",
+      "category_name": "官方运营与公告",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": null,
+      "enabled": true
+    },
+    {
+      "id": "spark_ai",
+      "name": "🤖 SPARK AI",
+      "category": "community",
+      "category_name": "社区互动与支持",
+      "target_lang": "en",
+      "target_lang_name": "English",
+      "thread_id": null,
+      "enabled": true
+    }
+  ],
+  "schedules": [
+    {
+      "id": "sched_gold_hourly",
+      "name": "区块链黄金与金融速递 (每小时自动播报)",
+      "target_topic_id": "market_gold",
+      "market_type": "gold",
+      "cron": "0 * * * *",
+      "description": "每小时整点自动拉取区块链 RWA 黄金 (PAXG / XAUT) 与现货金行情，生成高清海报推送到 GOLD MARKET 话题",
+      "enabled": true,
+      "auto_send": true
+    },
+    {
+      "id": "sched_global_morning",
+      "name": "亚太早盘速览 (Asia Morning Wrap)",
+      "target_topic_id": "market_global",
+      "market_type": "asia_stocks",
+      "cron": "30 9 * * 1-5",
+      "description": "每周一至周五 09:30 播报恒生、日经及亚太早间行情",
+      "enabled": false,
+      "auto_send": true
+    },
+    {
+      "id": "sched_us_opening",
+      "name": "美股大盘速评 (US Stocks Update)",
+      "target_topic_id": "market_global",
+      "market_type": "us_stocks",
+      "cron": "30 21 * * 1-5",
+      "description": "每周一至周五 21:30 播报道琼斯、标普500、纳斯达克行情",
+      "enabled": false,
+      "auto_send": true
+    }
+  ]
+}
