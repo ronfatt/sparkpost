@@ -277,10 +277,13 @@
                 <span v-if="card.send_status === 'success'" class="text-xs text-emerald-400 font-semibold flex items-center gap-1">
                   <i class="fa-solid fa-circle-check"></i> 发送成功
                 </span>
+                <span v-else-if="card.send_status === 'sending'" class="text-xs text-indigo-400 font-semibold flex items-center gap-1 animate-pulse">
+                  <i class="fa-solid fa-spinner animate-spin"></i> 正在发送...
+                </span>
                 <span v-else-if="card.send_status === 'error'" class="text-xs text-rose-400 font-semibold flex items-center gap-1" :title="card.error_msg">
                   <i class="fa-solid fa-circle-xmark"></i> 发送失败
                 </span>
-                <span v-else class="text-xs text-gray-500 font-mono">准备发送</span>
+                <span v-else class="text-xs text-gray-500 font-mono">准备就绪</span>
               </div>
 
               <textarea 
@@ -1476,58 +1479,51 @@ Beware of scammers and impersonators posing as official SparkOne team members!
           }
         };
 
-        // 上传全局默认配图
-        const handleImageUpload = async (event) => {
+        // 上传全局默认配图 (使用 FileReader 读取 Base64，云端直传零丢图)
+        const handleImageUpload = (event) => {
           const file = event.target.files[0];
           if (!file) return;
-          const formData = new FormData();
-          formData.append('file', file);
-          try {
-            const res = await fetch('/api/upload_image', {
-              method: 'POST',
-              body: formData
+
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const b64 = e.target.result;
+            uploadedImage.value = {
+              filename: file.name,
+              url: b64,
+              base64: b64
+            };
+            // 同步给未配图的卡片
+            translatedCards.value.forEach(c => {
+              if (!c.image_base64 && !c.image_filename) {
+                c.image_base64 = b64;
+                c.image_url = b64;
+                c.image_filename = file.name;
+              }
             });
-            const data = await res.json();
-            if (data.success) {
-              uploadedImage.value = data;
-              // 若下方已生成卡片且未指定个别图片，同步赋予默认图
-              translatedCards.value.forEach(c => {
-                if (!c.image_filename) {
-                  c.image_filename = data.filename;
-                  c.image_url = data.url;
-                }
-              });
-            }
-          } catch (e) {
-            alert('上传图片失败: ' + e);
-          }
+          };
+          reader.readAsDataURL(file);
         };
 
-        // 上传某国家专属已翻译配图
-        const handleCardImageUpload = async (event, card) => {
+        // 上传某国家专属已翻译配图 (秒级 Base64 预览)
+        const handleCardImageUpload = (event, card) => {
           const file = event.target.files[0];
           if (!file) return;
-          const formData = new FormData();
-          formData.append('file', file);
-          try {
-            const res = await fetch('/api/upload_image', {
-              method: 'POST',
-              body: formData
-            });
-            const data = await res.json();
-            if (data.success) {
-              card.image_filename = data.filename;
-              card.image_url = data.url;
-            }
-          } catch (e) {
-            alert('上传该国专属配图失败: ' + e);
-          }
+
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const b64 = e.target.result;
+            card.image_base64 = b64;
+            card.image_url = b64;
+            card.image_filename = file.name;
+          };
+          reader.readAsDataURL(file);
         };
 
         // 移除卡片配图
         const removeCardImage = (card) => {
           card.image_filename = null;
           card.image_url = null;
+          card.image_base64 = null;
         };
 
         // 触发卡片文件选择框
@@ -1539,7 +1535,7 @@ Beware of scammers and impersonators posing as official SparkOne team members!
           }
         };
 
-        // 一键发送所有卡片
+        // 一键发送所有卡片 (逐条平滑并发分发，绝不触发 Vercel 10s 超时)
         const handleSendAllBroadcast = async () => {
           if (!config.value.telegram?.bot_token || !config.value.telegram?.chat_id) {
             alert('请先在【话题绑定与配置】中填写 Telegram Bot Token 和群组 Chat ID！');
@@ -1549,69 +1545,88 @@ Beware of scammers and impersonators posing as official SparkOne team members!
           if (translatedCards.value.length === 0) return;
 
           isSending.value = true;
-          try {
-            const items = translatedCards.value.map(c => ({
-              topic_id: c.topic_id,
-              thread_id: c.thread_id ? parseInt(c.thread_id) : null,
-              text: c.translated_text,
-              image_filename: c.image_filename || null
-            }));
+          let successCount = 0;
+          let failCount = 0;
 
-            const res = await fetch('/api/broadcast/send', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                items: items,
-                image_filename: uploadedImage.value ? uploadedImage.value.filename : null
-              })
-            });
-            const data = await res.json();
-            if (data.success) {
-              data.results.forEach(r => {
-                const target = translatedCards.value.find(c => c.topic_id === r.topic_id);
-                if (target) {
-                  target.send_status = r.success ? 'success' : 'error';
-                  target.error_msg = r.error || '';
+          try {
+            for (let i = 0; i < translatedCards.value.length; i++) {
+              const card = translatedCards.value[i];
+              card.send_status = 'sending';
+
+              try {
+                const targetImg = card.image_filename || (uploadedImage.value ? uploadedImage.value.filename : null);
+                const targetB64 = card.image_base64 || (uploadedImage.value ? uploadedImage.value.base64 : null);
+
+                const res = await fetch('/api/broadcast/send_single', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    topic_id: card.topic_id,
+                    thread_id: card.thread_id ? parseInt(card.thread_id) : null,
+                    text: card.translated_text,
+                    image_filename: targetImg,
+                    image_base64: targetB64
+                  })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                  card.send_status = 'success';
+                  card.error_msg = '';
+                  successCount++;
+                } else {
+                  card.send_status = 'error';
+                  card.error_msg = data.error || '发送失败';
+                  failCount++;
                 }
-              });
-              alert('批量分发完成！请查看卡片状态');
-            } else {
-              alert('分发失败: ' + (data.detail || '未知错误'));
+              } catch (cardErr) {
+                card.send_status = 'error';
+                card.error_msg = String(cardErr);
+                failCount++;
+              }
+
+              // 逐条平滑停顿 250ms，完全消除 Telegram 并发限制
+              await new Promise(r => setTimeout(r, 250));
             }
+
+            alert(`🎉 批量分发完毕！\n成功: ${successCount} 个话题\n失败: ${failCount} 个话题`);
           } catch (e) {
-            alert('发送失败: ' + e);
+            alert('批量分发异常: ' + e);
           } finally {
             isSending.value = false;
           }
         };
 
         const handleSendSingle = async (card) => {
+          card.send_status = 'sending';
           const targetImg = card.image_filename || (uploadedImage.value ? uploadedImage.value.filename : null);
+          const targetB64 = card.image_base64 || (uploadedImage.value ? uploadedImage.value.base64 : null);
+
           try {
-            const res = await fetch('/api/broadcast/send', {
+            const res = await fetch('/api/broadcast/send_single', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                items: [{
-                  topic_id: card.topic_id,
-                  thread_id: card.thread_id ? parseInt(card.thread_id) : null,
-                  text: card.translated_text,
-                  image_filename: targetImg
-                }],
-                image_filename: targetImg
+                topic_id: card.topic_id,
+                thread_id: card.thread_id ? parseInt(card.thread_id) : null,
+                text: card.translated_text,
+                image_filename: targetImg,
+                image_base64: targetB64
               })
             });
             const data = await res.json();
-            if (data.results && data.results[0]) {
-              card.send_status = data.results[0].success ? 'success' : 'error';
-              card.error_msg = data.results[0].error || '';
-              if (data.results[0].success) {
-                alert(`已成功发送至 ${card.topic_name}！`);
-              } else {
-                alert('发送失败: ' + data.results[0].error);
-              }
+            if (data.success) {
+              card.send_status = 'success';
+              card.error_msg = '';
+              alert(`已成功发送至 ${card.topic_name}！`);
+            } else {
+              card.send_status = 'error';
+              card.error_msg = data.error || '发送失败';
+              alert('发送失败: ' + (data.error || '未知错误'));
             }
           } catch (e) {
+            card.send_status = 'error';
+            card.error_msg = String(e);
             alert('发送异常: ' + e);
           }
         };

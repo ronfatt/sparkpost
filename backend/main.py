@@ -1,6 +1,7 @@
 import os
 import shutil
 import asyncio
+import base64
 from typing import Dict, Any, List, Optional
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -87,10 +88,19 @@ class SendBroadcastItem(BaseModel):
     thread_id: Optional[int] = None
     text: str
     image_filename: Optional[str] = None
+    image_base64: Optional[str] = None
+
+class SendSingleItemModel(BaseModel):
+    topic_id: str
+    thread_id: Optional[int] = None
+    text: str
+    image_filename: Optional[str] = None
+    image_base64: Optional[str] = None
 
 class SendBroadcastRequestModel(BaseModel):
     items: List[SendBroadcastItem]
     image_filename: Optional[str] = None
+    image_base64: Optional[str] = None
 
 class MarketSendModel(BaseModel):
     topic_id: str
@@ -191,6 +201,76 @@ from backend.card_generator import CardGenerator
 
 # ... (数据模型保持不变) ...
 
+@app.post("/api/broadcast/send_single")
+async def send_single_broadcast(payload: SendSingleItemModel):
+    """向单个话题发送消息/带图消息 (直传 Base64，抗 Vercel 无状态与超时)"""
+    cfg = load_config()
+    token = cfg.get("telegram", {}).get("bot_token")
+    chat_id = cfg.get("telegram", {}).get("chat_id")
+
+    if not token or not chat_id:
+        raise HTTPException(status_code=400, detail="请先配置 Telegram Bot Token 和 群组 Chat ID")
+
+    # 1. 优先从 Base64 解析图片
+    item_img_bytes = None
+    filename = payload.image_filename or "image.jpg"
+    if payload.image_base64:
+        try:
+            b64_str = payload.image_base64
+            if "," in b64_str:
+                b64_str = b64_str.split(",", 1)[1]
+            item_img_bytes = base64.b64decode(b64_str)
+        except Exception as e:
+            logger.warning(f"Base64 解码异常: {e}")
+
+    # 2. 回退本地文件
+    if not item_img_bytes and payload.image_filename:
+        img_path = os.path.join(UPLOAD_DIR, payload.image_filename)
+        if os.path.exists(img_path):
+            with open(img_path, "rb") as f:
+                item_img_bytes = f.read()
+
+    th_id = payload.thread_id
+    if item_img_bytes:
+        if len(payload.text) <= 1024:
+            res = await TelegramService.send_photo(
+                token=token,
+                chat_id=chat_id,
+                photo_bytes=item_img_bytes,
+                filename=filename,
+                caption=payload.text,
+                thread_id=th_id
+            )
+        else:
+            await TelegramService.send_photo(
+                token=token,
+                chat_id=chat_id,
+                photo_bytes=item_img_bytes,
+                filename=filename,
+                caption=None,
+                thread_id=th_id
+            )
+            res = await TelegramService.send_message(
+                token=token,
+                chat_id=chat_id,
+                text=payload.text,
+                thread_id=th_id
+            )
+    else:
+        res = await TelegramService.send_message(
+            token=token,
+            chat_id=chat_id,
+            text=payload.text,
+            thread_id=th_id
+        )
+
+    return {
+        "success": res.get("success", False),
+        "topic_id": payload.topic_id,
+        "thread_id": th_id,
+        "error": res.get("error")
+    }
+
 @app.post("/api/broadcast/send")
 async def send_broadcast(payload: SendBroadcastRequestModel):
     """一键向勾选的话题批量发送已翻译的消息，支持每个国家话题专属配图与防限流控制"""
@@ -207,10 +287,21 @@ async def send_broadcast(payload: SendBroadcastRequestModel):
     for item in payload.items:
         th_id = item.thread_id
         
-        # 优先读取针对该国卡片单独上传的配图，若无则使用全局配图
-        item_img_name = item.image_filename or payload.image_filename
+        # 1. 优先读取 Base64
         item_img_bytes = None
-        if item_img_name:
+        item_img_name = item.image_filename or payload.image_filename
+        target_b64 = item.image_base64 or payload.image_base64
+        if target_b64:
+            try:
+                b64_str = target_b64
+                if "," in b64_str:
+                    b64_str = b64_str.split(",", 1)[1]
+                item_img_bytes = base64.b64decode(b64_str)
+            except Exception:
+                pass
+        
+        # 2. 回退本地文件
+        if not item_img_bytes and item_img_name:
             img_path = os.path.join(UPLOAD_DIR, item_img_name)
             if os.path.exists(img_path):
                 with open(img_path, "rb") as f:
