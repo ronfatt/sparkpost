@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "backend/main.py"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/scheduler/trigger/sched_gold_hourly",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
