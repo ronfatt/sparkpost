@@ -1379,17 +1379,42 @@ Beware of scammers and impersonators posing as official SparkOne team members!
             const res = await fetch('/api/config');
             const data = await res.json();
             config.value = data;
+
+            // 检查本地是否有持久化缓存的 Thread ID，若有则自动合并 (双保险防止刷新丢失)
+            const localSaved = localStorage.getItem('spark_saved_topics');
+            if (localSaved) {
+              try {
+                const cachedTopics = JSON.parse(localSaved);
+                let needSync = false;
+                config.value.topics.forEach(t => {
+                  const match = cachedTopics.find(c => c.id === t.id);
+                  if (match && match.thread_id && !t.thread_id) {
+                    t.thread_id = match.thread_id;
+                    needSync = true;
+                  }
+                });
+                if (needSync) {
+                  fetch('/api/config/topics', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config.value.topics)
+                  });
+                }
+              } catch (err) {
+                console.warn('解析本地话题缓存失败', err);
+              }
+            }
             
             tempTelegram.value = { ...data.telegram };
             tempTranslation.value = { ...data.translation };
             
             // 默认勾选全部启用的语言话题
-            selectedTopicIds.value = data.topics
+            selectedTopicIds.value = config.value.topics
               .filter(t => t.category === 'language' && t.enabled)
               .map(t => t.id);
 
             // 默认选中一个板块
-            const firstNonLang = data.topics.find(t => t.category !== 'language');
+            const firstNonLang = config.value.topics.find(t => t.category !== 'language');
             if (firstNonLang) {
               selectedHubTopic.value = firstNonLang;
             }
@@ -1732,6 +1757,8 @@ Beware of scammers and impersonators posing as official SparkOne team members!
         const saveTelegramConfig = async () => {
           isVerifyingBot.value = true;
           try {
+            localStorage.setItem('spark_telegram_token', tempTelegram.value.bot_token);
+            localStorage.setItem('spark_telegram_chat', tempTelegram.value.chat_id);
             const res = await fetch('/api/config/telegram', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -1741,7 +1768,7 @@ Beware of scammers and impersonators posing as official SparkOne team members!
             config.value = data.config;
             if (data.verification?.success) {
               botInfo.value = data.verification.bot;
-              alert(`连接成功！Bot 用户名: @${data.verification.bot.username}`);
+              alert(`连接成功！Bot 用户名: @${data.verification.bot.username} (配置已永久保存)`);
             } else {
               alert('保存成功，但 Bot 验证失败: ' + (data.verification?.error || 'Token 无效'));
             }
@@ -1788,6 +1815,8 @@ Beware of scammers and impersonators posing as official SparkOne team members!
         // 配置保存：话题绑定
         const saveTopicsConfig = async () => {
           try {
+            // 本地持久化存储，保障刷新或重新部署时永久保留
+            localStorage.setItem('spark_saved_topics', JSON.stringify(config.value.topics));
             const res = await fetch('/api/config/topics', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -1795,7 +1824,7 @@ Beware of scammers and impersonators posing as official SparkOne team members!
             });
             const data = await res.json();
             if (data.success) {
-              alert('话题 Thread ID 绑定已保存！');
+              alert('话题 Thread ID 绑定已保存！无论怎么刷新都不会丢失。');
             }
           } catch (e) {
             alert('保存异常: ' + e);
