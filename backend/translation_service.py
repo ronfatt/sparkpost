@@ -45,7 +45,7 @@ class TranslationService:
 
     @classmethod
     async def _translate_builtin(cls, text: str, target_lang: str) -> str:
-        """免 API Key 的内置翻译接口 (Google Translate public endpoint)"""
+        """免 API Key 的内置翻译接口 (Google Translate public endpoint with browser headers & MyMemory fallback)"""
         # 特殊语言代码映射
         lang_map = {
             "zh": "zh-CN",
@@ -69,18 +69,78 @@ class TranslationService:
             "dt": "t",
             "q": text
         }
-        async with httpx.AsyncClient(timeout=12.0) as client:
-            resp = await client.get(url, params=params)
-            if resp.status_code == 200:
-                try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Accept": "*/*",
+            "Accept-Language": "en-US,en;q=0.9,zh-CN;q=0.8"
+        }
+        try:
+            async with httpx.AsyncClient(timeout=10.0, headers=headers) as client:
+                resp = await client.get(url, params=params)
+                if resp.status_code == 200:
                     data = resp.json()
                     # data 格式通常为 [[["翻译后的文本", "原文", ...]]]
                     if data and isinstance(data, list) and data[0]:
                         translated_chunks = [part[0] for part in data[0] if part and part[0]]
-                        return "".join(translated_chunks)
-                except Exception:
-                    pass
-            return text
+                        result = "".join(translated_chunks)
+                        if result and result.strip() != text.strip():
+                            return result
+        except Exception as e:
+            logger.warning(f"Google 翻译接口在云端访问异常: {e}")
+
+        # 若 Google 因云端机房/AWS IP 拦截 (如 Vercel 环境)，自动调用对云端友好的备用翻译引擎
+        return await cls._translate_mymemory(text, target_lang)
+
+    @classmethod
+    async def _translate_mymemory(cls, text: str, target_lang: str) -> str:
+        """MyMemory 备用翻译引擎 (对云端数据中心与 Vercel/AWS IP 完全开放无拦截)"""
+        lang_map = {
+            "zh": "zh-CN",
+            "ms": "ms-MY",
+            "id": "id-ID",
+            "vi": "vi-VN",
+            "th": "th-TH",
+            "ja": "ja-JP",
+            "ko": "ko-KR",
+            "ar": "ar-SA",
+            "pt": "pt-PT",
+            "es": "es-ES",
+            "en": "en-GB"
+        }
+        tl = lang_map.get(target_lang, target_lang)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        }
+        url = "https://api.mymemory.translated.net/get"
+
+        try:
+            if len(text) <= 500:
+                params = {"q": text, "langpair": f"zh-CN|{tl}"}
+                async with httpx.AsyncClient(timeout=8.0, headers=headers) as client:
+                    resp = await client.get(url, params=params)
+                    if resp.status_code == 200:
+                        t = resp.json().get("responseData", {}).get("translatedText")
+                        if t and t.strip():
+                            return t
+            else:
+                lines = text.split("\n")
+                translated_lines = []
+                async with httpx.AsyncClient(timeout=10.0, headers=headers) as client:
+                    for line in lines:
+                        if not line.strip():
+                            translated_lines.append("")
+                            continue
+                        params = {"q": line, "langpair": f"zh-CN|{tl}"}
+                        resp = await client.get(url, params=params)
+                        if resp.status_code == 200:
+                            t = resp.json().get("responseData", {}).get("translatedText")
+                            translated_lines.append(t if t else line)
+                        else:
+                            translated_lines.append(line)
+                return "\n".join(translated_lines)
+        except Exception as e:
+            logger.warning(f"MyMemory 翻译失败: {e}")
+        return text
 
     @classmethod
     async def _translate_gemini(
