@@ -288,12 +288,47 @@
                 rows="4" 
                 class="w-full glass-input rounded p-2.5 text-xs resize-y leading-relaxed font-sans"></textarea>
 
+              <!-- 本国专属已翻译配图区域 -->
+              <div class="p-2.5 rounded-lg bg-gray-900/60 border border-gray-800 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div v-if="card.image_url" class="relative shrink-0">
+                    <img :src="card.image_url" class="w-10 h-10 object-cover rounded border border-indigo-500/50 shadow">
+                  </div>
+                  <div class="text-[11px] truncate">
+                    <div v-if="card.image_filename" class="text-indigo-300 font-medium flex items-center gap-1">
+                      <i class="fa-solid fa-image text-indigo-400"></i>
+                      <span class="truncate max-w-[130px]" :title="card.image_filename">{{ card.image_filename }}</span>
+                    </div>
+                    <div v-else class="text-gray-500 flex items-center gap-1">
+                      <i class="fa-regular fa-image text-gray-600"></i>
+                      <span>未添加图片 (发送纯文本)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <label class="cursor-pointer text-[11px] px-2.5 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 transition flex items-center gap-1 font-medium">
+                    <i class="fa-solid fa-cloud-arrow-up text-[10px]"></i>
+                    <span>{{ card.image_filename ? '更换配图' : '插入翻译图' }}</span>
+                    <input type="file" accept="image/*" @change="handleCardImageUpload($event, card)" class="hidden">
+                  </label>
+                  <button 
+                    v-if="card.image_filename" 
+                    @click="removeCardImage(card)" 
+                    title="移除图片"
+                    class="text-[11px] px-2 py-1 rounded bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/30 transition">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </div>
+              </div>
+
               <div class="flex items-center justify-between text-[11px] text-gray-400 pt-1">
                 <span>语种: {{ card.target_lang_name }} ({{ card.target_lang }})</span>
                 <button 
                   @click="handleSendSingle(card)" 
-                  class="text-indigo-400 hover:text-indigo-300 font-medium">
-                  单独重发此条
+                  class="text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1">
+                  <i class="fa-solid fa-paper-plane text-[10px]"></i>
+                  <span>单独发送此卡片</span>
                 </button>
               </div>
             </div>
@@ -1392,6 +1427,8 @@ Beware of scammers and impersonators posing as official SparkOne team members!
             if (data.success) {
               translatedCards.value = data.results.map(r => ({
                 ...r,
+                image_filename: uploadedImage.value ? uploadedImage.value.filename : null,
+                image_url: uploadedImage.value ? uploadedImage.value.url : null,
                 send_status: 'ready',
                 error_msg: ''
               }));
@@ -1405,7 +1442,7 @@ Beware of scammers and impersonators posing as official SparkOne team members!
           }
         };
 
-        // 上传配图
+        // 上传全局默认配图
         const handleImageUpload = async (event) => {
           const file = event.target.files[0];
           if (!file) return;
@@ -1419,10 +1456,44 @@ Beware of scammers and impersonators posing as official SparkOne team members!
             const data = await res.json();
             if (data.success) {
               uploadedImage.value = data;
+              // 若下方已生成卡片且未指定个别图片，同步赋予默认图
+              translatedCards.value.forEach(c => {
+                if (!c.image_filename) {
+                  c.image_filename = data.filename;
+                  c.image_url = data.url;
+                }
+              });
             }
           } catch (e) {
             alert('上传图片失败: ' + e);
           }
+        };
+
+        // 上传某国家专属已翻译配图
+        const handleCardImageUpload = async (event, card) => {
+          const file = event.target.files[0];
+          if (!file) return;
+          const formData = new FormData();
+          formData.append('file', file);
+          try {
+            const res = await fetch('/api/upload_image', {
+              method: 'POST',
+              body: formData
+            });
+            const data = await res.json();
+            if (data.success) {
+              card.image_filename = data.filename;
+              card.image_url = data.url;
+            }
+          } catch (e) {
+            alert('上传该国专属配图失败: ' + e);
+          }
+        };
+
+        // 移除卡片配图
+        const removeCardImage = (card) => {
+          card.image_filename = null;
+          card.image_url = null;
         };
 
         // 一键发送所有卡片
@@ -1439,7 +1510,8 @@ Beware of scammers and impersonators posing as official SparkOne team members!
             const items = translatedCards.value.map(c => ({
               topic_id: c.topic_id,
               thread_id: c.thread_id ? parseInt(c.thread_id) : null,
-              text: c.translated_text
+              text: c.translated_text,
+              image_filename: c.image_filename || null
             }));
 
             const res = await fetch('/api/broadcast/send', {
@@ -1471,6 +1543,7 @@ Beware of scammers and impersonators posing as official SparkOne team members!
         };
 
         const handleSendSingle = async (card) => {
+          const targetImg = card.image_filename || (uploadedImage.value ? uploadedImage.value.filename : null);
           try {
             const res = await fetch('/api/broadcast/send', {
               method: 'POST',
@@ -1479,9 +1552,10 @@ Beware of scammers and impersonators posing as official SparkOne team members!
                 items: [{
                   topic_id: card.topic_id,
                   thread_id: card.thread_id ? parseInt(card.thread_id) : null,
-                  text: card.translated_text
+                  text: card.translated_text,
+                  image_filename: targetImg
                 }],
-                image_filename: uploadedImage.value ? uploadedImage.value.filename : null
+                image_filename: targetImg
               })
             });
             const data = await res.json();
@@ -1489,13 +1563,13 @@ Beware of scammers and impersonators posing as official SparkOne team members!
               card.send_status = data.results[0].success ? 'success' : 'error';
               card.error_msg = data.results[0].error || '';
               if (data.results[0].success) {
-                alert('重发成功！');
+                alert(`已成功发送至 ${card.topic_name}！`);
               } else {
                 alert('发送失败: ' + data.results[0].error);
               }
             }
           } catch (e) {
-            alert('重发异常: ' + e);
+            alert('发送异常: ' + e);
           }
         };
 

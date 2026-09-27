@@ -86,6 +86,7 @@ class SendBroadcastItem(BaseModel):
     topic_id: str
     thread_id: Optional[int] = None
     text: str
+    image_filename: Optional[str] = None
 
 class SendBroadcastRequestModel(BaseModel):
     items: List[SendBroadcastItem]
@@ -192,7 +193,7 @@ from backend.card_generator import CardGenerator
 
 @app.post("/api/broadcast/send")
 async def send_broadcast(payload: SendBroadcastRequestModel):
-    """一键向勾选的话题批量发送已翻译的消息，内置平滑排队与防限流控制"""
+    """一键向勾选的话题批量发送已翻译的消息，支持每个国家话题专属配图与防限流控制"""
     cfg = load_config()
     token = cfg.get("telegram", {}).get("bot_token")
     chat_id = cfg.get("telegram", {}).get("chat_id")
@@ -200,27 +201,48 @@ async def send_broadcast(payload: SendBroadcastRequestModel):
     if not token or not chat_id:
         raise HTTPException(status_code=400, detail="请先配置 Telegram Bot Token 和 群组 Chat ID")
 
-    image_bytes = None
-    if payload.image_filename:
-        img_path = os.path.join(UPLOAD_DIR, payload.image_filename)
-        if os.path.exists(img_path):
-            with open(img_path, "rb") as f:
-                image_bytes = f.read()
-
     send_results = []
     
     # 平滑顺序分发，避免并发冲击触发 Telegram 429 限制
     for item in payload.items:
         th_id = item.thread_id
-        if image_bytes:
-            res = await TelegramService.send_photo(
-                token=token,
-                chat_id=chat_id,
-                photo_bytes=image_bytes,
-                filename=payload.image_filename or "image.jpg",
-                caption=item.text,
-                thread_id=th_id
-            )
+        
+        # 优先读取针对该国卡片单独上传的配图，若无则使用全局配图
+        item_img_name = item.image_filename or payload.image_filename
+        item_img_bytes = None
+        if item_img_name:
+            img_path = os.path.join(UPLOAD_DIR, item_img_name)
+            if os.path.exists(img_path):
+                with open(img_path, "rb") as f:
+                    item_img_bytes = f.read()
+
+        if item_img_bytes:
+            # Telegram 规定 photo caption 最大为 1024 字符
+            if len(item.text) <= 1024:
+                res = await TelegramService.send_photo(
+                    token=token,
+                    chat_id=chat_id,
+                    photo_bytes=item_img_bytes,
+                    filename=item_img_name or "image.jpg",
+                    caption=item.text,
+                    thread_id=th_id
+                )
+            else:
+                # 文本超过 1024 字符时，先发图再发长文案
+                await TelegramService.send_photo(
+                    token=token,
+                    chat_id=chat_id,
+                    photo_bytes=item_img_bytes,
+                    filename=item_img_name or "image.jpg",
+                    caption=None,
+                    thread_id=th_id
+                )
+                res = await TelegramService.send_message(
+                    token=token,
+                    chat_id=chat_id,
+                    text=item.text,
+                    thread_id=th_id
+                )
         else:
             res = await TelegramService.send_message(
                 token=token,
@@ -228,6 +250,7 @@ async def send_broadcast(payload: SendBroadcastRequestModel):
                 text=item.text,
                 thread_id=th_id
             )
+
         send_results.append({
             "topic_id": item.topic_id,
             "thread_id": th_id,
