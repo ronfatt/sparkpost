@@ -334,11 +334,21 @@
     },
     {
       "id": "sched_gold_hourly",
-      "name": "区块链黄金与金融速递 (每小时自动播报)",
+      "name": "🥇 区块链黄金与金融速递 (每小时自动播报)",
       "target_topic_id": "market_gold",
       "market_type": "gold",
       "cron": "0 * * * *",
       "description": "每小时整点自动拉取区块链 RWA 黄金 (PAXG / XAUT) 与现货金行情推送到 GOLD MARKET 话题",
+      "enabled": true,
+      "auto_send": true
+    },
+    {
+      "id": "sched_global_hourly",
+      "name": "📈 全球大盘股票与指数速报 (每小时自动更新)",
+      "target_topic_id": "market_global",
+      "market_type": "global_stocks",
+      "cron": "0 * * * *",
+      "description": "每小时整点自动拉取美股标普500、纳斯达克、道指、恒生、日经及BTC行情推送到 GLOBAL MARKETS 话题",
       "enabled": true,
       "auto_send": true
     },
