@@ -22,6 +22,24 @@ class TelegramService:
                 return {"success": False, "error": str(e)}
 
     @classmethod
+    def format_text(cls, text: Optional[str]) -> Optional[str]:
+        """将常用的 Markdown 语法 (**粗体**, *斜体*, `代码`, [链接](url)) 自动转换为 Telegram 官方 HTML 格式"""
+        if not text:
+            return text
+        import re
+        # 1. 粗体: **文本** -> <b>文本</b>
+        text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text, flags=re.DOTALL)
+        # 2. Markdown 链接: [文字](url) -> <a href="url">文字</a>
+        text = re.sub(r'\[([^\]]+)\]\((https?://[^\)]+)\)', r'<a href="\2">\1</a>', text)
+        # 3. 多行代码块: ```代码``` -> <pre>代码</pre>
+        text = re.sub(r'\`\`\`([a-zA-Z]*)\n?(.*?)\`\`\`', r'<pre>\2</pre>', text, flags=re.DOTALL)
+        # 4. 行内代码: `代码` -> <code>代码</code>
+        text = re.sub(r'\`([^\`\n]+)\`', r'<code>\1</code>', text)
+        # 5. 斜体: *文本* -> <i>文本</i> (排除以 * 开头的项目符号列表)
+        text = re.sub(r'(?<![\*\w])\*([^\*\n\s][^\*\n]*?[^\*\n\s])\*(?![\*\w])', r'<i>\1</i>', text)
+        return text
+
+    @classmethod
     async def send_message(
         cls,
         token: str,
@@ -32,6 +50,9 @@ class TelegramService:
         retry_count: int = 3
     ) -> Dict[str, Any]:
         """向指定群组的指定话题 (Topic) 发送消息，内置 429 限流自愈与重试"""
+        if parse_mode == "HTML" and text:
+            text = cls.format_text(text)
+
         url = f"{cls.BASE_URL.format(token=token)}/sendMessage"
         payload: Dict[str, Any] = {
             "chat_id": chat_id,
@@ -86,7 +107,10 @@ class TelegramService:
         thread_id: Optional[int] = None,
         parse_mode: str = "HTML"
     ) -> Dict[str, Any]:
-        """向指定话题发送带图片的广播"""
+        """向指定话题发送带图片的广播 (支持 Markdown 粗体自动转换与解析防错降级)"""
+        if parse_mode == "HTML" and caption:
+            caption = cls.format_text(caption)
+
         url = f"{cls.BASE_URL.format(token=token)}/sendPhoto"
         data: Dict[str, Any] = {
             "chat_id": chat_id,
@@ -105,6 +129,16 @@ class TelegramService:
                 res_json = resp.json()
                 if res_json.get("ok"):
                     return {"success": True, "message_id": res_json["result"]["message_id"]}
+                
+                # 如果 parse_mode 出错，移除 parse_mode 进行纯文本降级重试
+                if "can't parse entities" in res_json.get("description", "").lower():
+                    data.pop("parse_mode", None)
+                    files = {"photo": (filename, photo_bytes, "image/jpeg")}
+                    retry_resp = await client.post(url, data=data, files=files)
+                    retry_data = retry_resp.json()
+                    if retry_data.get("ok"):
+                        return {"success": True, "message_id": retry_data["result"]["message_id"]}
+
                 return {"success": False, "error": res_json.get("description", "Unknown error")}
             except Exception as e:
                 return {"success": False, "error": str(e)}
