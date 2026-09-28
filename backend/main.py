@@ -268,7 +268,7 @@ async def send_single_broadcast(payload: SendSingleItemModel):
         "success": res.get("success", False),
         "topic_id": payload.topic_id,
         "thread_id": th_id,
-        "error": res.get("error")
+        "error": res.get("error") or ("Telegram 发送未成功，请检查 Bot 是否在该群组且拥有管理员权限" if not res.get("success") else None)
     }
 
 @app.post("/api/broadcast/send")
@@ -342,11 +342,12 @@ async def send_broadcast(payload: SendBroadcastRequestModel):
                 thread_id=th_id
             )
 
+        print(f"DEBUG RES IN BROADCAST: res={res}, item_img_bytes len={len(item_img_bytes) if item_img_bytes else 0}")
         send_results.append({
             "topic_id": item.topic_id,
             "thread_id": th_id,
             "success": res.get("success", False),
-            "error": res.get("error")
+            "error": res.get("error") or ("Telegram 发送未成功，请检查 Bot 是否在该群组且拥有管理员权限" if not res.get("success") else "")
         })
         # 平滑延迟 0.35 秒
         await asyncio.sleep(0.35)
