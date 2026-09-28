@@ -321,13 +321,17 @@ class SparkAIService:
         5. ✨ SPARK AI INSIGHT (高传播金句) (10% 概率)
         6. 🚨 AI RISK ALERT (风控防御警报) (5% 概率)
         """
-        pillars = ["daily", "intelligence", "how_thinks", "knowledge", "insight", "risk_alert"]
-        weights = [0.25, 0.20, 0.20, 0.20, 0.10, 0.05]
+        pillars = ["daily", "crypto_pulse", "intelligence", "how_thinks", "knowledge", "insight", "risk_alert"]
+        weights = [0.22, 0.18, 0.18, 0.17, 0.15, 0.06, 0.04]
         chosen = random.choices(pillars, weights=weights, k=1)[0]
 
         if chosen == "daily":
             text = await cls.generate_daily_brief()
             title = "⚡ SPARK AI DAILY"
+        elif chosen == "crypto_pulse":
+            c_data = await MarketService.get_crypto_pulse_data()
+            text = c_data["telegram_message"]
+            title = c_data["title"]
         elif chosen == "intelligence":
             text = await cls.generate_market_intelligence()
             title = "📊 AI MARKET INTELLIGENCE"
