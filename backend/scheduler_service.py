@@ -156,6 +156,20 @@ class SchedulerService:
             except Exception as e:
                 logger.error(f"解析任务 cron 失败 ({s.get('id')}): {e}")
 
+        # 装载 7 天多语言广播排期心跳监测 (每分钟检测一次到期排期并自动执行)
+        try:
+            from backend.campaign_service import CampaignService
+            scheduler.add_job(
+                CampaignService.check_and_execute_due_days,
+                trigger=CronTrigger(minute="*", timezone="Asia/Shanghai"),
+                id="job_campaign_7days_heartbeat",
+                name="7天多语言广播排期到期检测心跳",
+                replace_existing=True
+            )
+            logger.info("已装载 7天多语言广播排期自动巡检心跳")
+        except Exception as e:
+            logger.error(f"装载 7天广播排期心跳失败: {e}")
+
         if not scheduler.running:
             scheduler.start()
             logger.info("APScheduler 服务已启动")

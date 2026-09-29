@@ -465,6 +465,67 @@ def get_scheduler_logs():
     """获取任务执行历史日志"""
     return SchedulerService.get_logs()
 
+# ================= 7天多语言广播排期部署接口 =================
+from backend.campaign_service import CampaignService
+
+class TranslateDayRequestModel(BaseModel):
+    day_index: int
+    text: Optional[str] = None
+    target_topic_ids: Optional[List[str]] = None
+
+class ResetCampaignRequestModel(BaseModel):
+    start_date: Optional[str] = None
+    daily_time: Optional[str] = "10:00"
+
+@app.get("/api/campaign/7days")
+def get_campaign_7days():
+    """获取当前 7 天广播排期配置与卡片状态"""
+    return CampaignService.get_campaign()
+
+@app.post("/api/campaign/7days")
+def save_campaign_7days(payload: Dict[str, Any]):
+    """保存并部署 7 天广播排期"""
+    return {"success": True, "campaign": CampaignService.save_campaign(payload)}
+
+@app.post("/api/campaign/7days/reset")
+def reset_campaign_7days(payload: ResetCampaignRequestModel):
+    """一键重置/生成 7 天标准推荐运营排期文案"""
+    days = CampaignService.get_default_days(start_date_str=payload.start_date, default_time=payload.daily_time or "10:00")
+    campaign = {
+        "enabled": True,
+        "daily_time": payload.daily_time or "10:00",
+        "start_date": days[0]["send_date"],
+        "days": days
+    }
+    return {"success": True, "campaign": CampaignService.save_campaign(campaign)}
+
+@app.post("/api/campaign/7days/translate_day")
+async def translate_campaign_day(payload: TranslateDayRequestModel):
+    """为某一天并发翻译 11 国卡片"""
+    cards = await CampaignService.translate_day_content(
+        day_index=payload.day_index,
+        custom_text=payload.text,
+        target_topic_ids=payload.target_topic_ids
+    )
+    return {"success": True, "cards": cards, "campaign": CampaignService.get_campaign()}
+
+@app.post("/api/campaign/7days/translate_all")
+async def translate_all_campaign_days():
+    """一键为全部 7 天生成多语言翻译卡片"""
+    res = await CampaignService.translate_all_days()
+    return res
+
+@app.post("/api/campaign/7days/trigger/{day_index}")
+async def trigger_campaign_day_now(day_index: int):
+    """立即测试/手动执行指定某一天的 11 国广播投放"""
+    return await CampaignService.execute_campaign_day(day_index, manual_trigger=True)
+
+@app.get("/api/campaign/7days/check")
+async def check_campaign_due_cron():
+    """到期排期检测 (支持外部 Cron / Vercel Cron 心跳触发)"""
+    results = await CampaignService.check_and_execute_due_days()
+    return {"success": True, "executed_count": len(results), "results": results}
+
 # ================= 页面首页 =================
 
 @app.get("/", response_class=HTMLResponse)

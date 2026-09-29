@@ -15,6 +15,7 @@ uploads/*
 
 # Local Secrets & Configurations
 data/config.json
+data/campaign_7days.json
 
 # macOS
 .DS_Store

@@ -172,178 +172,552 @@
           </div>
         </div>
 
-        <!-- 原文输入与配置 -->
-        <div class="glass-card rounded-xl p-5 space-y-4">
-          <!-- 目标话题快捷勾选胶囊 -->
-          <div>
-            <label class="block text-xs font-semibold text-gray-300 mb-2">
-              📢 投放目标国家话题 (已选 {{ selectedTopicIds.length }} 个):
-            </label>
-            <div class="flex flex-wrap gap-2">
-              <button 
-                v-for="t in languageTopics" 
-                :key="t.id"
-                @click="toggleTopicSelection(t.id)"
-                :class="selectedTopicIds.includes(t.id) ? 'bg-indigo-600 text-white border-indigo-400' : 'bg-gray-800/80 text-gray-400 border-gray-700'"
-                class="text-xs px-3 py-1.5 rounded-full border transition-all flex items-center gap-1.5">
-                <span>{{ t.name }}</span>
-                <span class="text-[10px] opacity-75 font-mono">({{ t.thread_id ? '#' + t.thread_id : '未设ID' }})</span>
-                <i v-if="selectedTopicIds.includes(t.id)" class="fa-solid fa-check text-[10px]"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- 文本编辑框 -->
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <label class="text-xs font-semibold text-gray-300">
-                ✏️ 公告原始内容 (支持中文/英文/Markdown/表情):
-              </label>
-              <div class="space-x-1">
-                <button @click="insertEmoji('🎉')" class="text-xs hover:bg-gray-800 px-1 rounded">🎉</button>
-                <button @click="insertEmoji('🔥')" class="text-xs hover:bg-gray-800 px-1 rounded">🔥</button>
-                <button @click="insertEmoji('🚀')" class="text-xs hover:bg-gray-800 px-1 rounded">🚀</button>
-                <button @click="insertEmoji('📢')" class="text-xs hover:bg-gray-800 px-1 rounded">📢</button>
-                <button @click="insertEmoji('⚠️')" class="text-xs hover:bg-gray-800 px-1 rounded">⚠️</button>
-              </div>
-            </div>
-            <textarea 
-              v-model="broadcastText" 
-              rows="5" 
-              placeholder="在这里输入你的公告原文，例如：
-亲爱的社区成员，SparkOne 全新功能正式上线！请点击下方链接体验最新版本，欢迎在各频道交流反馈！..."
-              class="w-full glass-input rounded-lg p-3 text-sm resize-y leading-relaxed"></textarea>
-          </div>
-
-          <!-- 图片上传附件 (可选) -->
-          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-gray-800">
-            <div class="flex items-center gap-3">
-              <label class="cursor-pointer text-xs px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 flex items-center gap-2">
-                <i class="fa-solid fa-image text-indigo-400"></i>
-                <span>{{ uploadedImage ? '已选择配图: ' + uploadedImage.filename : '添加配图 (可选)' }}</span>
-                <input type="file" accept="image/*" @change="handleImageUpload" class="hidden">
-              </label>
-              <button v-if="uploadedImage" @click="uploadedImage = null" class="text-xs text-rose-400 hover:underline">
-                移除配图
-              </button>
-            </div>
-
-            <!-- 操作按钮 -->
-            <button 
-              @click="handleTranslateAll" 
-              :disabled="isTranslating || !broadcastText.trim()"
-              class="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-sm shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2">
-              <i v-if="isTranslating" class="fa-solid fa-spinner animate-spin"></i>
-              <i v-else class="fa-solid fa-wand-magic-sparkles"></i>
-              <span>{{ isTranslating ? 'AI 正在并发翻译中...' : '生成 11 国卡片预览' }}</span>
-            </button>
-          </div>
+        <!-- 广播模式切换：即时一键群发 VS 7天排期部署 -->
+        <div class="flex items-center gap-3 p-1.5 rounded-xl bg-gray-900/80 border border-gray-800 w-fit">
+          <button 
+            @click="broadcastSubTab = 'immediate'" 
+            :class="broadcastSubTab === 'immediate' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-white'"
+            class="px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2">
+            <i class="fa-solid fa-bolt"></i>
+            <span>⚡ 即时一键群发 (实时广播)</span>
+          </button>
+          <button 
+            @click="broadcastSubTab = 'schedule_7days'" 
+            :class="broadcastSubTab === 'schedule_7days' ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-white'"
+            class="px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 relative">
+            <i class="fa-solid fa-calendar-days text-amber-300"></i>
+            <span>📅 7天排期部署 (每天自动发送)</span>
+            <span class="text-[9px] bg-amber-400 text-gray-950 font-bold px-1.5 py-0.5 rounded-full uppercase">NEW</span>
+          </button>
         </div>
 
-        <!-- 翻译结果预览与独立微调卡片区 -->
-        <div v-if="translatedCards.length > 0" class="space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-bold text-white flex items-center gap-2">
-              <span>📋 各国语言预览与微调 ({{ translatedCards.length }} 个)</span>
-              <span class="text-xs font-normal text-gray-400">发帖前可直接在卡片里修改文案</span>
-            </h3>
-
-            <button 
-              @click="handleSendAllBroadcast" 
-              :disabled="isSending"
-              class="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg transition disabled:opacity-50 flex items-center gap-2">
-              <i v-if="isSending" class="fa-solid fa-paper-plane animate-bounce"></i>
-              <i v-else class="fa-solid fa-paper-plane"></i>
-              <span>{{ isSending ? '正在批量分发到各话题...' : '确认无误，一键群发到所选话题！' }}</span>
-            </button>
-          </div>
-
-          <!-- 卡片网格 -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div 
-              v-for="card in translatedCards" 
-              :key="card.topic_id"
-              class="glass-card rounded-xl p-4 flex flex-col space-y-3 border-l-4"
-              :class="card.send_status === 'success' ? 'border-l-emerald-500' : (card.send_status === 'error' ? 'border-l-rose-500' : 'border-l-indigo-500')">
-              
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <span class="font-bold text-sm text-white">{{ card.topic_name }}</span>
-                  <span class="text-[10px] px-2 py-0.5 rounded bg-gray-800 text-gray-300 font-mono">
-                    Thread: {{ card.thread_id ? '#' + card.thread_id : '⚠️ 无Thread ID' }}
-                  </span>
-                </div>
-                
-                <span v-if="card.send_status === 'success'" class="text-xs text-emerald-400 font-semibold flex items-center gap-1">
-                  <i class="fa-solid fa-circle-check"></i> 发送成功
-                </span>
-                <span v-else-if="card.send_status === 'sending'" class="text-xs text-indigo-400 font-semibold flex items-center gap-1 animate-pulse">
-                  <i class="fa-solid fa-spinner animate-spin"></i> 正在发送...
-                </span>
-                <span v-else-if="card.send_status === 'error'" class="text-xs text-rose-400 font-semibold flex items-center gap-1" :title="card.error_msg">
-                  <i class="fa-solid fa-circle-xmark"></i> 发送失败
-                </span>
-                <span v-else class="text-xs text-gray-500 font-mono">准备就绪</span>
-              </div>
-
-              <textarea 
-                v-model="card.translated_text" 
-                rows="4" 
-                class="w-full glass-input rounded p-2.5 text-xs resize-y leading-relaxed font-sans"></textarea>
-
-              <!-- 本国专属已翻译配图区域 -->
-              <div class="p-2.5 rounded-lg bg-gray-900/60 border border-gray-800 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2.5 min-w-0">
-                  <div v-if="card.image_url" class="relative shrink-0">
-                    <img :src="card.image_url" class="w-10 h-10 object-cover rounded border border-indigo-500/50 shadow">
-                  </div>
-                  <div class="text-[11px] truncate">
-                    <div v-if="card.image_filename" class="text-indigo-300 font-medium flex items-center gap-1">
-                      <i class="fa-solid fa-image text-indigo-400"></i>
-                      <span class="truncate max-w-[130px]" :title="card.image_filename">{{ card.image_filename }}</span>
-                    </div>
-                    <div v-else class="text-gray-500 flex items-center gap-1">
-                      <i class="fa-regular fa-image text-gray-600"></i>
-                      <span>未添加图片 (发送纯文本)</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="flex items-center gap-1.5 shrink-0">
-                  <input 
-                    :id="'card-file-' + card.topic_id" 
-                    type="file" 
-                    accept="image/*" 
-                    @change="handleCardImageUpload($event, card)" 
-                    class="hidden">
-                  <button 
-                    type="button"
-                    @click="triggerCardFileInput(card.topic_id)"
-                    class="text-[11px] px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1 font-medium shadow-sm">
-                    <i class="fa-solid fa-cloud-arrow-up text-[10px]"></i>
-                    <span>{{ card.image_filename ? '更换配图' : '插入翻译图' }}</span>
-                  </button>
-                  <button 
-                    v-if="card.image_filename" 
-                    type="button"
-                    @click="removeCardImage(card)" 
-                    title="移除图片"
-                    class="text-[11px] px-2 py-1 rounded bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/30 transition">
-                    <i class="fa-solid fa-trash-can"></i>
-                  </button>
-                </div>
-              </div>
-
-              <div class="flex items-center justify-between text-[11px] text-gray-400 pt-1">
-                <span>语种: {{ card.target_lang_name }} ({{ card.target_lang }})</span>
+        <!-- 子模块 A: 即时一键群发 (原有功能保持不变) -->
+        <div v-show="broadcastSubTab === 'immediate'" class="space-y-6">
+          <!-- 原文输入与配置 -->
+          <div class="glass-card rounded-xl p-5 space-y-4">
+            <!-- 目标话题快捷勾选胶囊 -->
+            <div>
+              <label class="block text-xs font-semibold text-gray-300 mb-2">
+                📢 投放目标国家话题 (已选 {{ selectedTopicIds.length }} 个):
+              </label>
+              <div class="flex flex-wrap gap-2">
                 <button 
-                  @click="handleSendSingle(card)" 
-                  class="text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1">
-                  <i class="fa-solid fa-paper-plane text-[10px]"></i>
-                  <span>单独发送此卡片</span>
+                  v-for="t in languageTopics" 
+                  :key="t.id"
+                  @click="toggleTopicSelection(t.id)"
+                  :class="selectedTopicIds.includes(t.id) ? 'bg-indigo-600 text-white border-indigo-400' : 'bg-gray-800/80 text-gray-400 border-gray-700'"
+                  class="text-xs px-3 py-1.5 rounded-full border transition-all flex items-center gap-1.5">
+                  <span>{{ t.name }}</span>
+                  <span class="text-[10px] opacity-75 font-mono">({{ t.thread_id ? '#' + t.thread_id : '未设ID' }})</span>
+                  <i v-if="selectedTopicIds.includes(t.id)" class="fa-solid fa-check text-[10px]"></i>
                 </button>
               </div>
             </div>
+
+            <!-- 文本编辑框 -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="text-xs font-semibold text-gray-300">
+                  ✏️ 公告原始内容 (支持中文/英文/Markdown/表情):
+                </label>
+                <div class="space-x-1">
+                  <button @click="insertEmoji('🎉')" class="text-xs hover:bg-gray-800 px-1 rounded">🎉</button>
+                  <button @click="insertEmoji('🔥')" class="text-xs hover:bg-gray-800 px-1 rounded">🔥</button>
+                  <button @click="insertEmoji('🚀')" class="text-xs hover:bg-gray-800 px-1 rounded">🚀</button>
+                  <button @click="insertEmoji('📢')" class="text-xs hover:bg-gray-800 px-1 rounded">📢</button>
+                  <button @click="insertEmoji('⚠️')" class="text-xs hover:bg-gray-800 px-1 rounded">⚠️</button>
+                </div>
+              </div>
+              <textarea 
+                v-model="broadcastText" 
+                rows="5" 
+                placeholder="在这里输入你的公告原文，例如：
+亲爱的社区成员，SparkOne 全新功能正式上线！请点击下方链接体验最新版本，欢迎在各频道交流反馈！..."
+                class="w-full glass-input rounded-lg p-3 text-sm resize-y leading-relaxed font-sans"></textarea>
+            </div>
+
+            <!-- 图片上传附件 (可选) -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-gray-800">
+              <div class="flex items-center gap-3">
+                <label class="cursor-pointer text-xs px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 flex items-center gap-2">
+                  <i class="fa-solid fa-image text-indigo-400"></i>
+                  <span>{{ uploadedImage ? '已选择配图: ' + uploadedImage.filename : '添加配图 (可选)' }}</span>
+                  <input type="file" accept="image/*" @change="handleImageUpload" class="hidden">
+                </label>
+                <button v-if="uploadedImage" @click="uploadedImage = null" class="text-xs text-rose-400 hover:underline">
+                  移除配图
+                </button>
+              </div>
+
+              <!-- 操作按钮 -->
+              <button 
+                @click="handleTranslateAll" 
+                :disabled="isTranslating || !broadcastText.trim()"
+                class="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-sm shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2">
+                <i v-if="isTranslating" class="fa-solid fa-spinner animate-spin"></i>
+                <i v-else class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>{{ isTranslating ? 'AI 正在并发翻译中...' : '生成 11 国卡片预览' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 翻译结果预览与独立微调卡片区 -->
+          <div v-if="translatedCards.length > 0" class="space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <span>📋 各国语言预览与微调 ({{ translatedCards.length }} 个)</span>
+                <span class="text-xs font-normal text-gray-400">发帖前可直接在卡片里修改文案</span>
+              </h3>
+
+              <button 
+                @click="handleSendAllBroadcast" 
+                :disabled="isSending"
+                class="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg transition disabled:opacity-50 flex items-center gap-2">
+                <i v-if="isSending" class="fa-solid fa-paper-plane animate-bounce"></i>
+                <i v-else class="fa-solid fa-paper-plane"></i>
+                <span>{{ isSending ? '正在批量分发到各话题...' : '确认无误，一键群发到所选话题！' }}</span>
+              </button>
+            </div>
+
+            <!-- 卡片网格 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div 
+                v-for="card in translatedCards" 
+                :key="card.topic_id"
+                class="glass-card rounded-xl p-4 flex flex-col space-y-3 border-l-4"
+                :class="card.send_status === 'success' ? 'border-l-emerald-500' : (card.send_status === 'error' ? 'border-l-rose-500' : 'border-l-indigo-500')">
+                
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-sm text-white">{{ card.topic_name }}</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded bg-gray-800 text-gray-300 font-mono">
+                      Thread: {{ card.thread_id ? '#' + card.thread_id : '⚠️ 无Thread ID' }}
+                    </span>
+                  </div>
+                  
+                  <span v-if="card.send_status === 'success'" class="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                    <i class="fa-solid fa-circle-check"></i> 发送成功
+                  </span>
+                  <span v-else-if="card.send_status === 'sending'" class="text-xs text-indigo-400 font-semibold flex items-center gap-1 animate-pulse">
+                    <i class="fa-solid fa-spinner animate-spin"></i> 正在发送...
+                  </span>
+                  <span v-else-if="card.send_status === 'error'" class="text-xs text-rose-400 font-semibold flex items-center gap-1" :title="card.error_msg">
+                    <i class="fa-solid fa-circle-xmark"></i> 发送失败
+                  </span>
+                  <span v-else class="text-xs text-gray-500 font-mono">准备就绪</span>
+                </div>
+
+                <textarea 
+                  v-model="card.translated_text" 
+                  rows="4" 
+                  class="w-full glass-input rounded p-2.5 text-xs resize-y leading-relaxed font-sans"></textarea>
+
+                <!-- 本国专属已翻译配图区域 -->
+                <div class="p-2.5 rounded-lg bg-gray-900/60 border border-gray-800 flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <div v-if="card.image_url" class="relative shrink-0">
+                      <img :src="card.image_url" class="w-10 h-10 object-cover rounded border border-indigo-500/50 shadow">
+                    </div>
+                    <div class="text-[11px] truncate">
+                      <div v-if="card.image_filename" class="text-indigo-300 font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-image text-indigo-400"></i>
+                        <span class="truncate max-w-[130px]" :title="card.image_filename">{{ card.image_filename }}</span>
+                      </div>
+                      <div v-else class="text-gray-500 flex items-center gap-1">
+                        <i class="fa-regular fa-image text-gray-600"></i>
+                        <span>未添加图片 (发送纯文本)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <input 
+                      :id="'card-file-' + card.topic_id" 
+                      type="file" 
+                      accept="image/*" 
+                      @change="handleCardImageUpload($event, card)" 
+                      class="hidden">
+                    <button 
+                      type="button"
+                      @click="triggerCardFileInput(card.topic_id)"
+                      class="text-[11px] px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1 font-medium shadow-sm">
+                      <i class="fa-solid fa-cloud-arrow-up text-[10px]"></i>
+                      <span>{{ card.image_filename ? '更换配图' : '插入翻译图' }}</span>
+                    </button>
+                    <button 
+                      v-if="card.image_filename" 
+                      type="button"
+                      @click="removeCardImage(card)" 
+                      title="移除图片"
+                      class="text-[11px] px-2 py-1 rounded bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/30 transition">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between text-[11px] text-gray-400 pt-1">
+                  <span>语种: {{ card.target_lang_name }} ({{ card.target_lang }})</span>
+                  <button 
+                    @click="handleSendSingle(card)" 
+                    class="text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1">
+                    <i class="fa-solid fa-paper-plane text-[10px]"></i>
+                    <span>单独发送此卡片</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 子模块 B: 7天自动化排期部署系统 (全新重点) -->
+        <div v-show="broadcastSubTab === 'schedule_7days'" class="space-y-6">
+          <!-- 1. 全局配置与状态看板 -->
+          <div class="glass-card rounded-xl p-5 space-y-4 border border-purple-500/30">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800 pb-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white text-lg shadow-md">
+                  <i class="fa-solid fa-calendar-check"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-white text-base flex items-center gap-2">
+                    <span>7天多语言广播自动排期系统</span>
+                    <span v-if="campaign7Days.enabled" class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 font-normal">
+                      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                      自动调度运行中
+                    </span>
+                    <span v-else class="text-xs px-2.5 py-0.5 rounded-full bg-gray-700 text-gray-300 font-normal">
+                      已暂停调度
+                    </span>
+                  </h3>
+                  <p class="text-xs text-gray-400 mt-0.5">
+                    预先部署 7 天内容与配图，系统按设定的日期与时间每天自动并发翻译并平滑分发到 11 个国家话题。
+                  </p>
+                </div>
+              </div>
+
+              <!-- 操作按钮 -->
+              <div class="flex flex-wrap items-center gap-2">
+                <button 
+                  @click="resetCampaign7Days" 
+                  title="载入官方预设的 7 天 Web3/黄金/AI 量化运营范文"
+                  class="text-xs px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+                  <span>✨ 载入7天推荐文案</span>
+                </button>
+                <button 
+                  @click="handleTranslateAllDays" 
+                  :disabled="isTranslatingAllDays"
+                  class="text-xs px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition flex items-center gap-1.5 shadow-sm disabled:opacity-50">
+                  <i v-if="isTranslatingAllDays" class="fa-solid fa-spinner animate-spin"></i>
+                  <i v-else class="fa-solid fa-language"></i>
+                  <span>{{ isTranslatingAllDays ? '正在翻译7天全部卡片...' : '一键预翻译全部7天' }}</span>
+                </button>
+                <button 
+                  @click="saveCampaign7Days(false)" 
+                  :disabled="isDeployingCampaign"
+                  class="text-xs px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition flex items-center gap-1.5 shadow-md disabled:opacity-50">
+                  <i v-if="isDeployingCampaign" class="fa-solid fa-spinner animate-spin"></i>
+                  <i v-else class="fa-solid fa-cloud-arrow-up"></i>
+                  <span>🚀 保存并部署7天排期</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 全局参数控制 -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+              <div>
+                <label class="block text-xs font-semibold text-gray-300 mb-1">📅 排期起始日期 (Day 1):</label>
+                <input 
+                  type="date" 
+                  v-model="campaign7Days.start_date" 
+                  @change="applyUniformStartDate"
+                  class="w-full glass-input rounded-lg p-2 text-xs font-mono">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-300 mb-1">⏰ 统一每日发送时间 (默认):</label>
+                <div class="flex items-center gap-2">
+                  <input 
+                    type="time" 
+                    v-model="campaign7Days.daily_time" 
+                    class="w-full glass-input rounded-lg p-2 text-xs font-mono">
+                  <button 
+                    @click="applyUniformDailyTime" 
+                    title="将此时间一键同步给 Day 1 ~ Day 7"
+                    class="shrink-0 text-xs px-2.5 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-indigo-300 border border-gray-700 whitespace-nowrap">
+                    同步全部
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-300 mb-1">⚙️ 自动化调度总开关:</label>
+                <div class="flex items-center h-9">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" v-model="campaign7Days.enabled" @change="saveCampaign7Days(true)" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    <span class="ml-3 text-xs font-medium text-gray-300">{{ campaign7Days.enabled ? '排期已生效 (定时轮巡)' : '排期已暂停' }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. 7天排期时间线导航卡片 -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+            <button 
+              v-for="day in (campaign7Days.days || [])" 
+              :key="day.day_index"
+              @click="selectedCampaignDayIdx = day.day_index"
+              :class="selectedCampaignDayIdx === day.day_index ? 'border-purple-500 bg-purple-600/25 shadow-lg ring-2 ring-purple-500/50' : 'border-gray-800 bg-gray-900/60 hover:bg-gray-800/80'"
+              class="p-3 rounded-xl border text-left transition-all flex flex-col justify-between space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold" :class="selectedCampaignDayIdx === day.day_index ? 'text-purple-300' : 'text-gray-300'">
+                  Day {{ day.day_index }}
+                </span>
+                <span v-if="day.status === 'success'" class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-semibold flex items-center gap-0.5">
+                  <i class="fa-solid fa-check text-[8px]"></i> 已发送
+                </span>
+                <span v-else-if="day.status === 'sending'" class="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 font-semibold animate-pulse">
+                  发送中
+                </span>
+                <span v-else-if="day.status === 'failed'" class="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-semibold">
+                  失败
+                </span>
+                <span v-else-if="!day.enabled" class="text-[9px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-500 font-semibold">
+                  已禁用
+                </span>
+                <span v-else class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold">
+                  待发送
+                </span>
+              </div>
+              <div class="text-[11px] font-mono text-gray-400">
+                {{ day.send_date ? day.send_date.substring(5) : '--' }} {{ day.send_time }}
+              </div>
+              <div class="text-[10px] text-gray-400 truncate" :title="day.title">
+                {{ day.title }}
+              </div>
+            </button>
+          </div>
+
+          <!-- 3. 所选单日文案与图片编辑器 -->
+          <div v-if="currentCampaignDay" class="glass-card rounded-xl p-5 space-y-4 border border-gray-800">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-800 pb-3">
+              <div class="flex items-center gap-2 flex-1 min-w-0">
+                <span class="px-2.5 py-1 rounded bg-purple-600/30 text-purple-300 border border-purple-500/40 font-bold text-xs font-mono shrink-0">
+                  Day {{ currentCampaignDay.day_index }}
+                </span>
+                <input 
+                  type="text" 
+                  v-model="currentCampaignDay.title" 
+                  placeholder="该天的主题标题..."
+                  class="glass-input rounded px-3 py-1 text-sm font-semibold text-white w-full sm:max-w-md">
+              </div>
+
+              <div class="flex items-center gap-3 shrink-0">
+                <div class="flex items-center gap-2">
+                  <label class="text-xs text-gray-400">日期:</label>
+                  <input type="date" v-model="currentCampaignDay.send_date" class="glass-input rounded p-1 text-xs font-mono">
+                  <label class="text-xs text-gray-400 ml-1">时间:</label>
+                  <input type="time" v-model="currentCampaignDay.send_time" class="glass-input rounded p-1 text-xs font-mono">
+                </div>
+                <label class="flex items-center gap-1.5 text-xs text-gray-300 cursor-pointer">
+                  <input type="checkbox" v-model="currentCampaignDay.enabled" class="rounded bg-gray-800 border-gray-700 text-purple-600">
+                  <span>启用自动发送</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- 执行状态反馈 -->
+            <div v-if="currentCampaignDay.last_executed" class="p-3 rounded-lg bg-gray-900/80 border border-gray-800 flex items-center justify-between text-xs">
+              <span class="text-gray-400 flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i>
+                <span>最近执行时间: <b class="text-gray-200 font-mono">{{ currentCampaignDay.last_executed }}</b></span>
+                <span v-if="currentCampaignDay.execution_result" class="text-emerald-400 font-medium">
+                  (成功: {{ currentCampaignDay.execution_result.success_count }} 个话题 / 失败: {{ currentCampaignDay.execution_result.fail_count }} 个)
+                </span>
+              </span>
+              <button 
+                @click="currentCampaignDay.status = 'pending'; saveCampaign7Days(true)"
+                class="text-[11px] text-amber-400 hover:underline">
+                重置为待发送状态
+              </button>
+            </div>
+
+            <!-- 文案输入框 -->
+            <div>
+              <label class="block text-xs font-semibold text-gray-300 mb-2">
+                ✏️ Day {{ currentCampaignDay.day_index }} 广播文案原文 (母语输入，自动分发翻译为 11 国语言):
+              </label>
+              <textarea 
+                v-model="currentCampaignDay.text" 
+                rows="6" 
+                placeholder="输入该天的广播文案，支持 Markdown 粗体 **文字**、链接、表情符..."
+                class="w-full glass-input rounded-lg p-3 text-sm resize-y leading-relaxed font-sans"></textarea>
+            </div>
+
+            <!-- 配图与主动作栏 -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-gray-800">
+              <div class="flex items-center gap-3">
+                <input 
+                  :id="'day-file-' + currentCampaignDay.day_index" 
+                  type="file" 
+                  accept="image/*" 
+                  @change="handleDayImageUpload($event, currentCampaignDay)" 
+                  class="hidden">
+                <button 
+                  type="button"
+                  @click="triggerDayFileInput(currentCampaignDay.day_index)"
+                  class="text-xs px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 flex items-center gap-2 transition">
+                  <i class="fa-solid fa-image text-indigo-400"></i>
+                  <span>{{ currentCampaignDay.image_filename ? '更换配图 (' + currentCampaignDay.image_filename + ')' : '添加该天配图 (可选)' }}</span>
+                </button>
+                <button 
+                  v-if="currentCampaignDay.image_filename" 
+                  @click="removeDayImage(currentCampaignDay)" 
+                  class="text-xs text-rose-400 hover:underline">
+                  移除配图
+                </button>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button 
+                  @click="handleTranslateDay(currentCampaignDay)" 
+                  :disabled="isTranslatingDay || !currentCampaignDay.text?.trim()"
+                  class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow transition disabled:opacity-50 flex items-center gap-1.5">
+                  <i v-if="isTranslatingDay" class="fa-solid fa-spinner animate-spin"></i>
+                  <i v-else class="fa-solid fa-wand-magic-sparkles"></i>
+                  <span>{{ isTranslatingDay ? '正在并发翻译中...' : '生成此日 11 国卡片' }}</span>
+                </button>
+                <button 
+                  @click="triggerDayNow(currentCampaignDay)" 
+                  :disabled="isTriggeringDay"
+                  class="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs shadow transition disabled:opacity-50 flex items-center gap-1.5">
+                  <i v-if="isTriggeringDay" class="fa-solid fa-spinner animate-spin"></i>
+                  <i v-else class="fa-solid fa-paper-plane"></i>
+                  <span>{{ isTriggeringDay ? '正在立即投放...' : '立即测试发送此日' }}</span>
+                </button>
+                <button 
+                  @click="saveCampaign7Days(false)" 
+                  class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-floppy-disk"></i>
+                  <span>保存修改</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 配图预览 -->
+            <div v-if="currentCampaignDay.image_base64" class="pt-2">
+              <div class="relative w-36 h-24 rounded-lg overflow-hidden border border-purple-500/40 shadow">
+                <img :src="currentCampaignDay.image_base64" class="w-full h-full object-cover">
+                <span class="absolute bottom-0 inset-x-0 bg-black/60 text-[10px] text-gray-300 text-center py-0.5 truncate px-1">
+                  {{ currentCampaignDay.image_filename }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. 所选日的 11 国卡片微调区 -->
+          <div v-if="currentCampaignDay && currentCampaignDay.cards && currentCampaignDay.cards.length > 0" class="space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <span>📋 Day {{ currentCampaignDay.day_index }} 各国语言预览与微调 ({{ currentCampaignDay.cards.length }} 个)</span>
+                <span class="text-xs font-normal text-gray-400">可在各卡片内直接微调不同国家的文案或替换对应语言配图</span>
+              </h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div 
+                v-for="card in currentCampaignDay.cards" 
+                :key="card.topic_id"
+                class="glass-card rounded-xl p-4 flex flex-col space-y-3 border-l-4"
+                :class="card.send_status === 'success' ? 'border-l-emerald-500' : (card.send_status === 'error' ? 'border-l-rose-500' : 'border-l-purple-500')">
+                
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-sm text-white">{{ card.topic_name }}</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded bg-gray-800 text-gray-300 font-mono">
+                      Thread: {{ card.thread_id ? '#' + card.thread_id : '⚠️ 无Thread ID' }}
+                    </span>
+                  </div>
+                  
+                  <span v-if="card.send_status === 'success'" class="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                    <i class="fa-solid fa-circle-check"></i> 发送成功
+                  </span>
+                  <span v-else-if="card.send_status === 'sending'" class="text-xs text-indigo-400 font-semibold flex items-center gap-1 animate-pulse">
+                    <i class="fa-solid fa-spinner animate-spin"></i> 正在发送...
+                  </span>
+                  <span v-else-if="card.send_status === 'error'" class="text-xs text-rose-400 font-semibold flex items-center gap-1" :title="card.error_msg">
+                    <i class="fa-solid fa-circle-xmark"></i> 发送失败
+                  </span>
+                  <span v-else class="text-xs text-gray-500 font-mono">准备就绪</span>
+                </div>
+
+                <textarea 
+                  v-model="card.translated_text" 
+                  rows="4" 
+                  class="w-full glass-input rounded p-2.5 text-xs resize-y leading-relaxed font-sans"></textarea>
+
+                <!-- 配图与单独发送 -->
+                <div class="p-2.5 rounded-lg bg-gray-900/60 border border-gray-800 flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <div v-if="card.image_base64 || currentCampaignDay.image_base64" class="relative shrink-0">
+                      <img :src="card.image_base64 || currentCampaignDay.image_base64" class="w-10 h-10 object-cover rounded border border-indigo-500/50 shadow">
+                    </div>
+                    <div class="text-[11px] truncate">
+                      <span v-if="card.image_filename" class="text-indigo-300 truncate max-w-[130px] block" :title="card.image_filename">
+                        {{ card.image_filename }}
+                      </span>
+                      <span v-else-if="currentCampaignDay.image_filename" class="text-gray-400 truncate max-w-[130px] block">
+                        (使用本日常规配图)
+                      </span>
+                      <span v-else class="text-gray-500">
+                        未配图 (纯文本)
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <input 
+                      :id="'day-card-file-' + currentCampaignDay.day_index + '-' + card.topic_id" 
+                      type="file" 
+                      accept="image/*" 
+                      @change="handleDayCardImageUpload($event, card)" 
+                      class="hidden">
+                    <button 
+                      type="button"
+                      @click="triggerDayCardFileInput(currentCampaignDay.day_index, card.topic_id)"
+                      class="text-[11px] px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1 font-medium shadow-sm">
+                      <i class="fa-solid fa-cloud-arrow-up text-[10px]"></i>
+                      <span>{{ card.image_filename ? '更换配图' : '插入翻译图' }}</span>
+                    </button>
+                    <button 
+                      v-if="card.image_filename" 
+                      type="button"
+                      @click="removeDayCardImage(card)" 
+                      title="移除独立配图"
+                      class="text-[11px] px-2 py-1 rounded bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/30 transition">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between text-[11px] text-gray-400 pt-1">
+                  <span>语种: {{ card.target_lang_name }} ({{ card.target_lang }})</span>
+                  <button 
+                    @click="handleSendSingle(card)" 
+                    class="text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1">
+                    <i class="fa-solid fa-paper-plane text-[10px]"></i>
+                    <span>单独发送此卡片</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-else class="p-6 rounded-xl bg-gray-900/40 border border-dashed border-gray-800 text-center space-y-2">
+            <i class="fa-solid fa-language text-2xl text-purple-400/60"></i>
+            <p class="text-xs text-gray-400">Day {{ currentCampaignDay.day_index }} 尚未生成 11 国卡片预览。</p>
+            <p class="text-[11px] text-gray-500">
+              您可以点击上方的 <b class="text-indigo-300">【生成此日 11 国卡片】</b> 提前审阅，或者直接点击【保存并部署排期】——系统将在排期到达时自动现场翻译并分发！
+            </p>
           </div>
         </div>
       </section>
@@ -1140,12 +1514,26 @@
         const botInfo = ref({});
         
         // 广播模块状态
+        const broadcastSubTab = ref('immediate'); // 'immediate' | 'schedule_7days'
         const broadcastText = ref('');
         const selectedTopicIds = ref([]);
         const uploadedImage = ref(null);
         const isTranslating = ref(false);
         const isSending = ref(false);
         const translatedCards = ref([]);
+
+        // 7天多语言排期模块状态
+        const campaign7Days = ref({ enabled: true, daily_time: '10:00', start_date: '', days: [] });
+        const selectedCampaignDayIdx = ref(1);
+        const isTranslatingDay = ref(false);
+        const isTranslatingAllDays = ref(false);
+        const isDeployingCampaign = ref(false);
+        const isTriggeringDay = ref(false);
+
+        const currentCampaignDay = computed(() => {
+          const days = campaign7Days.value.days || [];
+          return days.find(d => d.day_index === selectedCampaignDayIdx.value) || days[0] || {};
+        });
 
         // 社区板块直发模块状态
         const selectedHubTopic = ref(null);
@@ -1631,6 +2019,212 @@ Beware of scammers and impersonators posing as official SparkOne team members!
           }
         };
 
+        // ================= 7天多语言排期部署方法 =================
+        const loadCampaign7Days = async () => {
+          try {
+            const res = await fetch('/api/campaign/7days');
+            const data = await res.json();
+            if (data.campaign) {
+              campaign7Days.value = data.campaign;
+            }
+          } catch (e) {
+            console.error('加载7天排期失败:', e);
+          }
+        };
+
+        const saveCampaign7Days = async (silent = false) => {
+          isDeployingCampaign.value = true;
+          try {
+            const res = await fetch('/api/campaign/7days', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(campaign7Days.value)
+            });
+            const data = await res.json();
+            if (data.success) {
+              campaign7Days.value = data.campaign;
+              if (!silent) {
+                alert('🎉 7天排期计划与所有文案配图已成功保存并部署！\n系统将在设定时间自动精准发送。');
+              }
+            } else {
+              alert('保存排期失败: ' + (data.error || '未知错误'));
+            }
+          } catch (e) {
+            alert('保存排期异常: ' + e);
+          } finally {
+            isDeployingCampaign.value = false;
+          }
+        };
+
+        const resetCampaign7Days = async () => {
+          if (!confirm('确定要载入官方预设的 7 天 Web3/黄金/AI 量化运营范文吗？这将覆盖当前 7 天的未保存草稿。')) {
+            return;
+          }
+          try {
+            const res = await fetch('/api/campaign/7days/reset', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ start_date: campaign7Days.value.start_date || undefined })
+            });
+            const data = await res.json();
+            if (data.success) {
+              campaign7Days.value = data.campaign;
+              alert('✨ 官方 7 天运营推荐文案已成功载入！');
+            }
+          } catch (e) {
+            alert('载入推荐文案异常: ' + e);
+          }
+        };
+
+        const applyUniformDailyTime = () => {
+          const t = campaign7Days.value.daily_time || '10:00';
+          (campaign7Days.value.days || []).forEach(d => {
+            d.send_time = t;
+          });
+          alert(`已将统一发送时间 ${t} 应用至 Day 1 ~ Day 7！请记得点击保存修改。`);
+        };
+
+        const applyUniformStartDate = () => {
+          const start = campaign7Days.value.start_date;
+          if (!start) return;
+          try {
+            const startDate = new Date(start + 'T00:00:00');
+            (campaign7Days.value.days || []).forEach(d => {
+              const target = new Date(startDate.getTime() + (d.day_index - 1) * 86400000);
+              const y = target.getFullYear();
+              const m = String(target.getMonth() + 1).padStart(2, '0');
+              const dayStr = String(target.getDate()).padStart(2, '0');
+              d.send_date = `${y}-${m}-${dayStr}`;
+            });
+          } catch (e) {
+            console.error('计算日期失败:', e);
+          }
+        };
+
+        const triggerDayFileInput = (dayIdx) => {
+          const el = document.getElementById('day-file-' + dayIdx);
+          if (el) el.click();
+        };
+
+        const handleDayImageUpload = (event, day) => {
+          const file = event.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            day.image_base64 = e.target.result;
+            day.image_filename = file.name;
+          };
+          reader.readAsDataURL(file);
+        };
+
+        const removeDayImage = (day) => {
+          day.image_base64 = null;
+          day.image_filename = null;
+        };
+
+        const triggerDayCardFileInput = (dayIdx, topicId) => {
+          const el = document.getElementById('day-card-file-' + dayIdx + '-' + topicId);
+          if (el) el.click();
+        };
+
+        const handleDayCardImageUpload = (event, card) => {
+          const file = event.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            card.image_base64 = e.target.result;
+            card.image_filename = file.name;
+          };
+          reader.readAsDataURL(file);
+        };
+
+        const removeDayCardImage = (card) => {
+          card.image_base64 = null;
+          card.image_filename = null;
+        };
+
+        const handleTranslateDay = async (day) => {
+          if (!day.text || !day.text.trim()) {
+            alert('请先输入该天的广播文案！');
+            return;
+          }
+          isTranslatingDay.value = true;
+          try {
+            const res = await fetch('/api/campaign/7days/translate_day', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                day_index: day.day_index,
+                text: day.text,
+                image_filename: day.image_filename || null,
+                image_base64: day.image_base64 || null
+              })
+            });
+            const data = await res.json();
+            if (data.success) {
+              day.cards = data.cards;
+              const matchIdx = (campaign7Days.value.days || []).findIndex(d => d.day_index === day.day_index);
+              if (matchIdx > -1) {
+                campaign7Days.value.days[matchIdx].cards = data.cards;
+              }
+              alert(`🎉 Day ${day.day_index} 的 11 国语言翻译与微调卡片生成完毕！`);
+            } else {
+              alert('翻译失败: ' + (data.error || '未知错误'));
+            }
+          } catch (e) {
+            alert('翻译异常: ' + e);
+          } finally {
+            isTranslatingDay.value = false;
+          }
+        };
+
+        const handleTranslateAllDays = async () => {
+          if (!confirm('确定要并发翻译 Day 1 ~ Day 7 全部文案吗？这会为所有 7 天生成 11 国卡片预览。')) {
+            return;
+          }
+          isTranslatingAllDays.value = true;
+          try {
+            const res = await fetch('/api/campaign/7days/translate_all', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (data.success) {
+              campaign7Days.value = data.campaign;
+              alert('🎉 7天全部文案已成功并发翻译为 11 国卡片！');
+            } else {
+              alert('批量翻译失败: ' + (data.error || '未知错误'));
+            }
+          } catch (e) {
+            alert('批量翻译异常: ' + e);
+          } finally {
+            isTranslatingAllDays.value = false;
+          }
+        };
+
+        const triggerDayNow = async (day) => {
+          if (!confirm(`确定要立即向 Telegram 发送 【Day ${day.day_index}: ${day.title}】 的广播内容吗？\n将按配置逐个推送到所有已配置 Thread ID 的国家话题。`)) {
+            return;
+          }
+          isTriggeringDay.value = true;
+          try {
+            const res = await fetch(`/api/campaign/7days/trigger/${day.day_index}`, {
+              method: 'POST'
+            });
+            const data = await res.json();
+            if (data.success) {
+              await loadCampaign7Days();
+              alert(`🎉 Day ${day.day_index} 投放完成！\n成功: ${data.result?.success_count || 0} 个话题\n失败: ${data.result?.fail_count || 0} 个话题`);
+            } else {
+              alert('立即发送失败: ' + (data.error || '未知错误'));
+            }
+          } catch (e) {
+            alert('发送异常: ' + e);
+          } finally {
+            isTriggeringDay.value = false;
+          }
+        };
+
         // 市场模块：拉取数据预览
         const fetchMarketPreview = async (type) => {
           try {
@@ -1849,18 +2443,41 @@ Beware of scammers and impersonators posing as official SparkOne team members!
         onMounted(() => {
           loadConfig();
           loadSchedulerLogs();
+          loadCampaign7Days();
         });
 
         return {
           activeTab,
           config,
           botInfo,
+          broadcastSubTab,
           broadcastText,
           selectedTopicIds,
           uploadedImage,
           isTranslating,
           isSending,
           translatedCards,
+          campaign7Days,
+          selectedCampaignDayIdx,
+          isTranslatingDay,
+          isTranslatingAllDays,
+          isDeployingCampaign,
+          isTriggeringDay,
+          currentCampaignDay,
+          loadCampaign7Days,
+          saveCampaign7Days,
+          resetCampaign7Days,
+          applyUniformDailyTime,
+          applyUniformStartDate,
+          triggerDayFileInput,
+          handleDayImageUpload,
+          removeDayImage,
+          triggerDayCardFileInput,
+          handleDayCardImageUpload,
+          removeDayCardImage,
+          handleTranslateDay,
+          handleTranslateAllDays,
+          triggerDayNow,
           selectedHubTopic,
           hubContentText,
           hubImage,
