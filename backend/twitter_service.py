@@ -234,6 +234,8 @@ class TwitterService:
             err_msg = error_data.get("detail") or error_data.get("title") or resp.text
             if "duplicate" in err_msg.lower():
                 err_msg = "推特检测到重复内容 (Duplicate content)，请微调推文文字后再发布。"
+            elif resp.status_code == 402 or "credits depleted" in err_msg.lower():
+                err_msg = "推特账户余额不足 (402 credits depleted): 您在 X Developer Console 中的项目为 Pay Per Use (按量计费) 模式，请在 developer.x.com 左侧导航栏点击【Billing】->【Credits】充值少量额度。"
             elif resp.status_code == 403:
                 err_msg = "发布权限受限 (403): 请检查 App 权限是否具有 'Write' 写入权限，或是否已超过推特每日发推频次上限。"
 
