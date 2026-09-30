@@ -1604,11 +1604,16 @@
               <!-- 文案输入与字数计数 -->
               <div>
                 <div class="flex items-center justify-between mb-1.5">
-                  <span class="text-xs font-semibold text-gray-300">推文正文 (支持 Emoji、#Hashtag、超链接):</span>
+                  <span class="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                    <span>推文正文 (支持长推文、Emoji、#Hashtag、超链接):</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold border border-sky-500/30 flex items-center gap-1">
+                      <i class="fa-solid fa-circle-check text-[9px]"></i> 蓝标长推文特权 (最高 4,000 字)
+                    </span>
+                  </span>
                   <span 
                     class="text-xs font-mono font-bold"
-                    :class="tweetDraftText.length > 280 ? 'text-rose-400' : (tweetDraftText.length > 240 ? 'text-amber-400' : 'text-sky-400')">
-                    {{ tweetDraftText.length }} / 280 字符
+                    :class="tweetDraftText.length > 4000 ? 'text-rose-400' : 'text-sky-400'">
+                    {{ tweetDraftText.length }} / 4,000 字符
                   </span>
                 </div>
 
