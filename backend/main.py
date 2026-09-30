@@ -15,7 +15,8 @@ from backend.config import (
     update_telegram_settings,
     update_translation_settings,
     update_topics,
-    update_schedules
+    update_schedules,
+    update_twitter_settings
 )
 from backend.telegram_service import TelegramService
 from backend.translation_service import TranslationService

@@ -2957,12 +2957,12 @@ Beware of scammers and impersonators posing as official SparkOne team members!
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(tempTwitter.value)
             });
-            const data = await res.json();
-            if (data.success) {
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.success) {
               tempTwitter.value = { ...tempTwitter.value, ...data.config };
               alert('🎉 推特 (X.com) API 配置已成功保存！');
             } else {
-              alert('保存失败: ' + (data.error || '未知错误'));
+              alert('保存失败: ' + (data.error || data.detail || '服务响应异常'));
             }
           } catch (e) {
             alert('保存异常: ' + e);
@@ -2984,13 +2984,13 @@ Beware of scammers and impersonators posing as official SparkOne team members!
                 access_token_secret: tempTwitter.value.access_token_secret
               })
             });
-            const data = await res.json();
-            if (data.success && data.user) {
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.success && data.user) {
               tempTwitter.value.account_info = data.user;
               tempTwitter.value.enabled = true;
               alert(`🎉 成功连接推特！\n已识别账号: @${data.user.username} (${data.user.name})\n粉丝数: ${data.user.followers_count || 0}`);
             } else {
-              alert('❌ 推特连接校验失败:\n' + (data.error || '未知错误'));
+              alert('❌ 推特连接校验失败:\n' + (data.error || data.detail || '未知错误'));
             }
           } catch (e) {
             alert('校验异常: ' + e);
