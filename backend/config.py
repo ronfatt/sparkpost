@@ -40,6 +40,33 @@ def load_config() -> Dict[str, Any]:
     if env_chat_id:
         cfg.setdefault("telegram", {})["chat_id"] = env_chat_id.strip()
 
+    # Twitter / X (x.com) 环境变量支持
+    env_tw_key = os.environ.get("TWITTER_API_KEY")
+    env_tw_secret = os.environ.get("TWITTER_API_SECRET")
+    env_tw_token = os.environ.get("TWITTER_ACCESS_TOKEN")
+    env_tw_token_secret = os.environ.get("TWITTER_ACCESS_TOKEN_SECRET")
+    env_tw_bearer = os.environ.get("TWITTER_BEARER_TOKEN")
+    if env_tw_key:
+        cfg.setdefault("twitter", {})["api_key"] = env_tw_key.strip()
+    if env_tw_secret:
+        cfg.setdefault("twitter", {})["api_secret"] = env_tw_secret.strip()
+    if env_tw_token:
+        cfg.setdefault("twitter", {})["access_token"] = env_tw_token.strip()
+    if env_tw_token_secret:
+        cfg.setdefault("twitter", {})["access_token_secret"] = env_tw_token_secret.strip()
+    if env_tw_bearer:
+        cfg.setdefault("twitter", {})["bearer_token"] = env_tw_bearer.strip()
+
+    cfg.setdefault("twitter", {
+        "enabled": False,
+        "api_key": "",
+        "api_secret": "",
+        "access_token": "",
+        "access_token_secret": "",
+        "bearer_token": "",
+        "account_info": {}
+    })
+
     return cfg
 
 def save_config(config_data: Dict[str, Any]) -> None:
@@ -77,5 +104,28 @@ def update_topics(topics: List[Dict[str, Any]]) -> Dict[str, Any]:
 def update_schedules(schedules: List[Dict[str, Any]]) -> Dict[str, Any]:
     cfg = load_config()
     cfg["schedules"] = schedules
+    save_config(cfg)
+    return cfg
+
+def update_twitter_settings(
+    api_key: str, 
+    api_secret: str, 
+    access_token: str, 
+    access_token_secret: str, 
+    bearer_token: str = "", 
+    enabled: bool = True,
+    account_info: Dict[str, Any] = None
+) -> Dict[str, Any]:
+    cfg = load_config()
+    cfg.setdefault("twitter", {})
+    cfg["twitter"]["api_key"] = api_key.strip()
+    cfg["twitter"]["api_secret"] = api_secret.strip()
+    cfg["twitter"]["access_token"] = access_token.strip()
+    cfg["twitter"]["access_token_secret"] = access_token_secret.strip()
+    if bearer_token is not None:
+        cfg["twitter"]["bearer_token"] = bearer_token.strip()
+    cfg["twitter"]["enabled"] = enabled
+    if account_info is not None:
+        cfg["twitter"]["account_info"] = account_info
     save_config(cfg)
     return cfg

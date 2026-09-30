@@ -170,6 +170,20 @@ class SchedulerService:
         except Exception as e:
             logger.error(f"装载 7天广播排期心跳失败: {e}")
 
+        # 装载推特 (X.com) 自动排期心跳监测 (每分钟检测一次到期推文并自动推送)
+        try:
+            from backend.twitter_service import TwitterService
+            scheduler.add_job(
+                TwitterService.check_and_execute_due_tweets,
+                trigger=CronTrigger(minute="*", timezone="Asia/Shanghai"),
+                id="job_twitter_schedules_heartbeat",
+                name="Twitter (X.com) 自动排期到期检测心跳",
+                replace_existing=True
+            )
+            logger.info("已装载 Twitter (X.com) 自动发文排期巡检心跳")
+        except Exception as e:
+            logger.error(f"装载推特排期心跳失败: {e}")
+
         if not scheduler.running:
             scheduler.start()
             logger.info("APScheduler 服务已启动")

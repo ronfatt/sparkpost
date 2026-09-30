@@ -526,6 +526,130 @@ async def check_campaign_due_cron():
     results = await CampaignService.check_and_execute_due_days()
     return {"success": True, "executed_count": len(results), "results": results}
 
+# ================= Twitter / X (x.com) 运营与自动发文接口 =================
+from backend.twitter_service import TwitterService
+
+class TwitterConfigModel(BaseModel):
+    api_key: str
+    api_secret: str
+    access_token: str
+    access_token_secret: str
+    bearer_token: Optional[str] = ""
+    enabled: bool = True
+
+class TwitterVerifyModel(BaseModel):
+    api_key: str
+    api_secret: str
+    access_token: str
+    access_token_secret: str
+
+class TweetPostModel(BaseModel):
+    text: str
+    image_filename: Optional[str] = None
+    image_base64: Optional[str] = None
+
+class TwitterScheduleModel(BaseModel):
+    title: str
+    text: str
+    image_filename: Optional[str] = None
+    image_base64: Optional[str] = None
+    scheduled_date: str
+    scheduled_time: str
+    repeat: Optional[str] = "none"
+    enabled: Optional[bool] = True
+
+@app.get("/api/twitter/config")
+def get_twitter_config():
+    """获取当前推特绑定配置与状态"""
+    cfg = load_config()
+    tw = cfg.get("twitter", {})
+    return {
+        "success": True,
+        "config": {
+            "api_key": tw.get("api_key", ""),
+            "api_secret": tw.get("api_secret", ""),
+            "access_token": tw.get("access_token", ""),
+            "access_token_secret": tw.get("access_token_secret", ""),
+            "bearer_token": tw.get("bearer_token", ""),
+            "enabled": tw.get("enabled", False),
+            "account_info": tw.get("account_info", {})
+        }
+    }
+
+@app.post("/api/twitter/config")
+def save_twitter_config(payload: TwitterConfigModel):
+    """保存推特配置并重启调度器"""
+    cfg = update_twitter_settings(
+        api_key=payload.api_key,
+        api_secret=payload.api_secret,
+        access_token=payload.access_token,
+        access_token_secret=payload.access_token_secret,
+        bearer_token=payload.bearer_token or "",
+        enabled=payload.enabled
+    )
+    SchedulerService.reload_schedules()
+    return {"success": True, "config": cfg.get("twitter", {})}
+
+@app.post("/api/twitter/verify")
+def verify_twitter_connection(payload: TwitterVerifyModel):
+    """在线校验推特 API 凭证并获取当前推特账号信息"""
+    return TwitterService.verify_credentials(
+        api_key=payload.api_key,
+        api_secret=payload.api_secret,
+        access_token=payload.access_token,
+        access_token_secret=payload.access_token_secret
+    )
+
+@app.post("/api/twitter/tweet")
+def post_tweet_now(payload: TweetPostModel):
+    """即时发布推文到 Twitter/X"""
+    return TwitterService.post_tweet(
+        text=payload.text,
+        image_path=payload.image_filename,
+        image_base64=payload.image_base64
+    )
+
+@app.get("/api/twitter/schedules")
+def get_twitter_schedules():
+    """获取所有已制定的推特自动发文排期"""
+    return {"success": True, "schedules": TwitterService.load_schedules()}
+
+@app.post("/api/twitter/schedules")
+def add_twitter_schedule(payload: TwitterScheduleModel):
+    """新增一条推特定时排期"""
+    item = TwitterService.add_schedule(payload.model_dump())
+    return {"success": True, "schedule": item}
+
+@app.put("/api/twitter/schedules/{schedule_id}")
+def update_twitter_schedule(schedule_id: str, payload: Dict[str, Any]):
+    """更新一条推特定时排期"""
+    item = TwitterService.update_schedule(schedule_id, payload)
+    if not item:
+        raise HTTPException(status_code=404, detail="未找到该推特排期任务")
+    return {"success": True, "schedule": item}
+
+@app.delete("/api/twitter/schedules/{schedule_id}")
+def delete_twitter_schedule(schedule_id: str):
+    """删除一条推特定时排期"""
+    success = TwitterService.delete_schedule(schedule_id)
+    return {"success": success}
+
+@app.post("/api/twitter/schedules/{schedule_id}/trigger")
+def trigger_twitter_schedule(schedule_id: str):
+    """立即执行指定的推特排期任务"""
+    return TwitterService.trigger_schedule_now(schedule_id)
+
+@app.get("/api/twitter/templates")
+def get_twitter_templates():
+    """获取推特精选高转化文案模版"""
+    return {"success": True, "templates": TwitterService.get_templates()}
+
+@app.get("/api/twitter/check")
+def check_twitter_due_cron():
+    """推特到期排期检测 (支持外部 Cron / Vercel Cron 心跳)"""
+    results = TwitterService.check_and_execute_due_tweets()
+    return {"success": True, "executed_count": len(results), "results": results}
+
 # ================= 页面首页 =================
 
 @app.get("/", response_class=HTMLResponse)

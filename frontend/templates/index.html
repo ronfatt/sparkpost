@@ -116,6 +116,17 @@
           <i class="fa-solid fa-sliders w-5 text-center"></i>
           <span>话题绑定与配置</span>
         </button>
+
+        <!-- 导航 6: 推特 (X.com) 官方矩阵运营 (全新上线) -->
+        <button 
+          @click="activeTab = 'twitter'" 
+          :class="activeTab === 'twitter' ? 'bg-sky-600/30 text-sky-400 border border-sky-500/40' : 'text-gray-300 hover:bg-gray-800/60'"
+          class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all">
+          <i class="fa-brands fa-x-twitter w-5 text-center text-base"></i>
+          <span>推特 (X.com) 运营</span>
+          <span v-if="twitterAccount?.username" class="ml-auto text-[10px] bg-sky-500/20 text-sky-300 px-1.5 py-0.5 rounded font-mono">@{{ twitterAccount.username }}</span>
+          <span v-else class="ml-auto text-[10px] bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded font-mono">待连接</span>
+        </button>
       </nav>
 
       <!-- 底部机器人在线状态卡片 -->
@@ -128,6 +139,14 @@
               @{{ botInfo.username }}
             </span>
             <span v-else class="text-amber-400">待配置</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-400">Twitter (X):</span>
+            <span v-if="twitterAccount?.username" class="text-sky-400 font-mono font-medium flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
+              @{{ twitterAccount.username }}
+            </span>
+            <span v-else class="text-gray-500">未连接</span>
           </div>
           <div class="flex items-center justify-between">
             <span class="text-gray-400">群组 Chat ID:</span>
@@ -1501,6 +1520,639 @@
 
       </section>
 
+      <!-- ================= 模块 6: 推特 (X.com) 官方矩阵运营与自动发文 (全新上线) ================= -->
+      <section v-if="activeTab === 'twitter'" class="space-y-6 max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-white flex items-center gap-2.5">
+              <i class="fa-brands fa-x-twitter text-sky-400 text-3xl"></i>
+              <span>推特 (X.com) 官方矩阵运营与自动发文</span>
+            </h2>
+            <p class="text-sm text-gray-400 mt-1">
+              直连推特官方 API (X.com)，支持单条推文即时发布、图片多媒体附带、精选 Web3 爆款模板一键套用，以及制定每日定时循环自动发文排期。
+            </p>
+          </div>
+
+          <!-- 顶部状态指示条 -->
+          <div class="flex items-center gap-2">
+            <span v-if="twitterAccount?.username" class="px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/30 text-xs font-mono flex items-center gap-1.5 shadow-sm">
+              <span class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
+              <span>@{{ twitterAccount.username }} 已连接</span>
+            </span>
+            <span v-else class="px-3 py-1.5 rounded-lg bg-gray-800 text-gray-400 border border-gray-700 text-xs flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+              <span>推特 API 待配置</span>
+            </span>
+
+            <span class="px-3 py-1.5 rounded-lg bg-gray-900 border border-gray-800 text-xs text-gray-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-heart-pulse text-emerald-400"></i>
+              <span>排期巡检心跳: 每分钟</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- 子模块切换 Pill Switcher -->
+        <div class="flex items-center space-x-2 border-b border-gray-800 pb-3">
+          <button 
+            @click="twitterSubTab = 'compose'" 
+            :class="twitterSubTab === 'compose' ? 'bg-sky-600 text-white shadow-lg shadow-sky-600/30' : 'bg-gray-800/80 text-gray-400 hover:text-gray-200'"
+            class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2">
+            <i class="fa-solid fa-pen-nib"></i>
+            <span>推文编写与即时发布</span>
+          </button>
+          <button 
+            @click="twitterSubTab = 'pipeline'" 
+            :class="twitterSubTab === 'pipeline' ? 'bg-sky-600 text-white shadow-lg shadow-sky-600/30' : 'bg-gray-800/80 text-gray-400 hover:text-gray-200'"
+            class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2">
+            <i class="fa-solid fa-calendar-check"></i>
+            <span>制定自动发文排期</span>
+            <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-black/40">{{ twitterSchedules.length }}</span>
+          </button>
+          <button 
+            @click="twitterSubTab = 'settings'" 
+            :class="twitterSubTab === 'settings' ? 'bg-sky-600 text-white shadow-lg shadow-sky-600/30' : 'bg-gray-800/80 text-gray-400 hover:text-gray-200'"
+            class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2">
+            <i class="fa-solid fa-key"></i>
+            <span>API 授权与连接配置</span>
+          </button>
+        </div>
+
+        <!-- ================= 子页面 1: 推文编写与即时发布 ================= -->
+        <div v-if="twitterSubTab === 'compose'" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- 左侧：撰写编辑器 (7 Cols) -->
+          <div class="lg:col-span-7 space-y-4">
+            <div class="glass-card rounded-xl p-5 space-y-4">
+              
+              <!-- 爆款模板快速套用栏 -->
+              <div>
+                <label class="block text-xs font-bold text-gray-300 mb-2 flex items-center gap-1.5">
+                  <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+                  <span>快速套用 Web3 / AI 爆款推文模板:</span>
+                </label>
+                <div class="flex flex-wrap gap-2">
+                  <button 
+                    v-for="tmpl in twitterTemplates" 
+                    :key="tmpl.id"
+                    @click="applyTweetTemplate(tmpl)"
+                    class="text-[11px] px-2.5 py-1.5 rounded-lg bg-gray-900/80 hover:bg-gray-800 text-gray-300 border border-gray-700 transition flex items-center gap-1">
+                    <span>{{ tmpl.title }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 文案输入与字数计数 -->
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-xs font-semibold text-gray-300">推文正文 (支持 Emoji、#Hashtag、超链接):</span>
+                  <span 
+                    class="text-xs font-mono font-bold"
+                    :class="tweetDraftText.length > 280 ? 'text-rose-400' : (tweetDraftText.length > 240 ? 'text-amber-400' : 'text-sky-400')">
+                    {{ tweetDraftText.length }} / 280 字符
+                  </span>
+                </div>
+
+                <textarea 
+                  v-model="tweetDraftText" 
+                  rows="7" 
+                  placeholder="在推特 (X.com) 上分享 SparkOne 最新生态进展、黄金 RWA 动态、SPARK AI 投研早报..."
+                  class="w-full glass-input rounded-xl p-3 text-sm resize-y leading-relaxed font-sans"></textarea>
+              </div>
+
+              <!-- 快捷标签与常用表情 -->
+              <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-gray-800">
+                <div class="flex flex-wrap items-center gap-1">
+                  <span class="text-[11px] text-gray-500 mr-1">常用标签:</span>
+                  <button 
+                    v-for="tag in ['#SparkOne', '#Web3', '#Gold', '#RWA', '#AI', '#Crypto', '#Bitcoin']" 
+                    :key="tag"
+                    @click="insertTweetHashtag(tag)"
+                    class="text-[11px] px-2 py-0.5 rounded bg-sky-950/60 hover:bg-sky-900/60 text-sky-300 font-mono transition border border-sky-800/40">
+                    {{ tag }}
+                  </button>
+                </div>
+
+                <div class="flex items-center gap-1">
+                  <button 
+                    v-for="emoji in ['🪙', '🤖', '🚀', '📊', '🚨', '📈', '💎', '🔥']" 
+                    :key="emoji"
+                    @click="insertTweetEmoji(emoji)"
+                    class="text-xs p-1 rounded hover:bg-gray-800 transition">
+                    {{ emoji }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- 图片附件上传与预览 -->
+              <div class="p-3 rounded-xl bg-gray-900/60 border border-gray-800 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div v-if="tweetDraftImage?.base64" class="relative shrink-0">
+                    <img :src="tweetDraftImage.base64" class="w-12 h-12 object-cover rounded-lg border border-sky-500/50 shadow">
+                  </div>
+                  <div class="text-xs truncate">
+                    <span v-if="tweetDraftImage?.filename" class="text-sky-300 font-medium truncate block">
+                      {{ tweetDraftImage.filename }}
+                    </span>
+                    <span v-else class="text-gray-500">
+                      未附带图片 (推特将发布纯文本)
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0">
+                  <input 
+                    id="tweet-image-input" 
+                    type="file" 
+                    accept="image/*" 
+                    @change="handleTweetImageUpload" 
+                    class="hidden">
+                  <button 
+                    type="button"
+                    @click="triggerTweetFileInput"
+                    class="text-xs px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition flex items-center gap-1.5 font-medium">
+                    <i class="fa-solid fa-image text-sky-400"></i>
+                    <span>{{ tweetDraftImage ? '更换图片' : '上传推特配图' }}</span>
+                  </button>
+                  <button 
+                    v-if="tweetDraftImage" 
+                    type="button"
+                    @click="removeTweetImage" 
+                    class="text-xs px-2.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 transition">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 发布动作按钮 -->
+              <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                <button 
+                  @click="openScheduleFromDraft" 
+                  class="w-full sm:w-auto text-xs px-4 py-2.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 transition flex items-center justify-center gap-1.5 font-medium">
+                  <i class="fa-solid fa-calendar-plus text-sky-400"></i>
+                  <span>以此文案制定定时排期</span>
+                </button>
+
+                <button 
+                  @click="postTweetNow" 
+                  :disabled="isPostingTweet || !tweetDraftText.trim()"
+                  class="w-full sm:w-auto text-xs px-6 py-2.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-black font-extrabold transition shadow-lg shadow-sky-500/20 disabled:opacity-50 flex items-center justify-center gap-2">
+                  <i v-if="isPostingTweet" class="fa-solid fa-spinner animate-spin"></i>
+                  <i v-else class="fa-brands fa-x-twitter text-sm"></i>
+                  <span>{{ isPostingTweet ? '正在推送到推特...' : '立即发布到推特 (X.com)' }}</span>
+                </button>
+              </div>
+
+              <!-- 最近发布成功提示 -->
+              <div v-if="lastPostedTweetUrl" class="p-3 rounded-lg bg-sky-950/40 border border-sky-800/60 flex items-center justify-between text-xs">
+                <span class="text-sky-300 flex items-center gap-2">
+                  <i class="fa-solid fa-circle-check text-emerald-400"></i>
+                  <span>推文已成功发布！</span>
+                </span>
+                <a :href="lastPostedTweetUrl" target="_blank" class="text-sky-400 hover:underline font-mono flex items-center gap-1 font-bold">
+                  <span>在新窗口查看推文</span>
+                  <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                </a>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- 右侧：X.com 拟真推文预览卡片 (5 Cols) -->
+          <div class="lg:col-span-5 space-y-4">
+            <div class="glass-card rounded-xl p-5 space-y-3">
+              <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                <h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="fa-brands fa-x-twitter text-white"></i>
+                  <span>推特客户端实时预览效果</span>
+                </h3>
+                <span class="text-[10px] text-gray-500 font-mono">X Dark Mode</span>
+              </div>
+
+              <!-- 拟真推文容器 -->
+              <div class="bg-black rounded-xl p-4 border border-gray-800 text-white space-y-3 shadow-2xl">
+                <!-- 推特作者信息栏 -->
+                <div class="flex items-start justify-between">
+                  <div class="flex items-center gap-3">
+                    <img 
+                      :src="twitterAccount.profile_image_url || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'" 
+                      class="w-10 h-10 rounded-full border border-gray-700 object-cover bg-gray-800">
+                    <div class="leading-tight">
+                      <div class="flex items-center gap-1">
+                        <span class="font-bold text-sm text-white hover:underline cursor-pointer">
+                          {{ twitterAccount.name || 'SparkOne' }}
+                        </span>
+                        <i v-if="twitterAccount.verified" class="fa-solid fa-circle-check text-sky-400 text-xs"></i>
+                      </div>
+                      <span class="text-xs text-gray-500 font-mono">
+                        @{{ twitterAccount.username || 'SparkOne_Official' }} · 刚刚
+                      </span>
+                    </div>
+                  </div>
+                  <i class="fa-brands fa-x-twitter text-gray-500 text-base"></i>
+                </div>
+
+                <!-- 推文正文 -->
+                <div class="text-sm whitespace-pre-wrap leading-relaxed text-gray-100 font-sans break-words">
+                  {{ tweetDraftText || '这里是推特正文预览区。在左侧输入或套用模板后，此处将实时展示在推特信息流中的最终视觉效果...' }}
+                </div>
+
+                <!-- 配图预览 -->
+                <div v-if="tweetDraftImage?.base64" class="rounded-xl overflow-hidden border border-gray-800 max-h-64 bg-gray-900">
+                  <img :src="tweetDraftImage.base64" class="w-full h-full object-cover">
+                </div>
+
+                <!-- 拟真互动按钮栏 -->
+                <div class="flex items-center justify-between text-gray-500 text-xs pt-2 border-t border-gray-900">
+                  <span class="flex items-center gap-1.5 hover:text-sky-400 transition cursor-pointer">
+                    <i class="fa-regular fa-comment"></i>
+                    <span>18</span>
+                  </span>
+                  <span class="flex items-center gap-1.5 hover:text-emerald-400 transition cursor-pointer">
+                    <i class="fa-solid fa-retweet"></i>
+                    <span>42</span>
+                  </span>
+                  <span class="flex items-center gap-1.5 hover:text-rose-400 transition cursor-pointer">
+                    <i class="fa-regular fa-heart"></i>
+                    <span>168</span>
+                  </span>
+                  <span class="flex items-center gap-1.5 hover:text-sky-400 transition cursor-pointer">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    <span>2.4K</span>
+                  </span>
+                  <span class="hover:text-gray-300 transition cursor-pointer">
+                    <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                  </span>
+                </div>
+              </div>
+
+              <!-- 账号状态提示 -->
+              <div v-if="!twitterAccount.username" class="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
+                💡 尚未连接推特 API，发布前请点击上方【API 授权与连接配置】填入 X Developer 秘钥。
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= 子页面 2: 制定自动发文排期 ================= -->
+        <div v-if="twitterSubTab === 'pipeline'" class="space-y-4">
+          
+          <div class="glass-card rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-gray-800">
+            <div>
+              <h3 class="font-bold text-white text-base flex items-center gap-2">
+                <span>📅 推特定时与循环自动发文流水线</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30">
+                  共 {{ twitterSchedules.length }} 个任务
+                </span>
+              </h3>
+              <p class="text-xs text-gray-400 mt-1">
+                制定每天不同时段的推特发布计划，支持单次定时和每日/每周自动循环发送，后台心跳每分钟精准巡检。
+              </p>
+            </div>
+
+            <button 
+              @click="showNewScheduleForm = !showNewScheduleForm"
+              class="px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-black text-xs font-bold transition flex items-center gap-1.5 shadow-md">
+              <i class="fa-solid fa-plus"></i>
+              <span>{{ showNewScheduleForm ? '收起排期表单' : '制定新发文排期' }}</span>
+            </button>
+          </div>
+
+          <!-- 新建排期表单折叠卡片 -->
+          <div v-if="showNewScheduleForm" class="glass-card rounded-xl p-5 space-y-4 border border-sky-500/40 shadow-xl animate-fadeIn">
+            <h4 class="font-bold text-sm text-sky-300 flex items-center gap-2">
+              <i class="fa-solid fa-clock"></i>
+              <span>新增推特排期任务</span>
+            </h4>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">任务名称/主题:</label>
+                <input 
+                  type="text" 
+                  v-model="newScheduleForm.title" 
+                  placeholder="例如: 每日美股开盘 AI 投研早报" 
+                  class="w-full glass-input rounded-lg p-2 text-xs">
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">执行日期:</label>
+                <input 
+                  type="date" 
+                  v-model="newScheduleForm.scheduled_date" 
+                  class="w-full glass-input rounded-lg p-2 text-xs font-mono">
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">执行时间:</label>
+                  <input 
+                    type="time" 
+                    v-model="newScheduleForm.scheduled_time" 
+                    class="w-full glass-input rounded-lg p-2 text-xs font-mono">
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">循环频率:</label>
+                  <select v-model="newScheduleForm.repeat" class="w-full glass-input rounded-lg p-2 text-xs">
+                    <option value="none">单次定时</option>
+                    <option value="daily">每日循环 🔄</option>
+                    <option value="weekly">每周循环 🔄</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">推文正文 (支持 Emoji、#Hashtag):</label>
+              <textarea 
+                v-model="newScheduleForm.text" 
+                rows="4" 
+                placeholder="输入排期到达时自动发布的推文内容..." 
+                class="w-full glass-input rounded-lg p-2.5 text-xs font-sans leading-relaxed"></textarea>
+            </div>
+
+            <!-- 排期配图上传 -->
+            <div class="flex items-center justify-between gap-3 pt-1">
+              <div class="flex items-center gap-3">
+                <input 
+                  id="new-sched-image-input" 
+                  type="file" 
+                  accept="image/*" 
+                  @change="handleNewScheduleImageUpload" 
+                  class="hidden">
+                <button 
+                  type="button" 
+                  @click="triggerNewScheduleFileInput"
+                  class="text-xs px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-image text-sky-400"></i>
+                  <span>{{ newScheduleForm.image_filename ? '配图: ' + newScheduleForm.image_filename : '添加排期配图 (可选)' }}</span>
+                </button>
+                <button 
+                  v-if="newScheduleForm.image_filename" 
+                  @click="removeNewScheduleImage" 
+                  class="text-xs text-rose-400 hover:underline">
+                  移除配图
+                </button>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button 
+                  @click="showNewScheduleForm = false" 
+                  class="text-xs px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 transition">
+                  取消
+                </button>
+                <button 
+                  @click="createTwitterSchedule" 
+                  :disabled="!newScheduleForm.text?.trim()"
+                  class="text-xs px-5 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-black font-bold transition disabled:opacity-50">
+                  确认加入自动发文排期
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 排期列表卡片 -->
+          <div class="space-y-3">
+            <div 
+              v-for="sched in twitterSchedules" 
+              :key="sched.id"
+              class="glass-card rounded-xl p-4 border border-gray-800 flex flex-col md:flex-row md:items-center justify-between gap-4 transition hover:border-gray-700">
+              
+              <div class="space-y-2 flex-1 min-w-0">
+                <div class="flex items-center gap-2.5 flex-wrap">
+                  <span class="font-bold text-white text-sm">{{ sched.title }}</span>
+
+                  <!-- 状态徽章 -->
+                  <span v-if="sched.status === 'success'" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold flex items-center gap-1">
+                    <i class="fa-solid fa-check text-[9px]"></i> 已成功发送
+                  </span>
+                  <span v-else-if="sched.status === 'sending'" class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 font-semibold animate-pulse flex items-center gap-1">
+                    <i class="fa-solid fa-spinner animate-spin"></i> 发送中
+                  </span>
+                  <span v-else-if="sched.status === 'failed'" class="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-semibold flex items-center gap-1" :title="sched.error_msg">
+                    <i class="fa-solid fa-circle-xmark"></i> 发送失败
+                  </span>
+                  <span v-else class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold flex items-center gap-1">
+                    <i class="fa-solid fa-clock"></i> 待发送
+                  </span>
+
+                  <!-- 循环方式 -->
+                  <span v-if="sched.repeat === 'daily'" class="text-[10px] px-2 py-0.5 rounded bg-sky-950/60 text-sky-300 border border-sky-800/50 font-mono">
+                    每日循环 🔄
+                  </span>
+                  <span v-else-if="sched.repeat === 'weekly'" class="text-[10px] px-2 py-0.5 rounded bg-purple-950/60 text-purple-300 border border-purple-800/50 font-mono">
+                    每周循环 🔄
+                  </span>
+                  <span v-else class="text-[10px] px-2 py-0.5 rounded bg-gray-800 text-gray-400 font-mono">
+                    单次排期
+                  </span>
+
+                  <span class="text-xs font-mono text-gray-400">
+                    <i class="fa-regular fa-calendar mr-1"></i>{{ sched.scheduled_date }} {{ sched.scheduled_time }}
+                  </span>
+                </div>
+
+                <!-- 正文摘要 -->
+                <div class="text-xs text-gray-300 line-clamp-2 font-sans whitespace-pre-line bg-gray-950/50 p-2 rounded-lg border border-gray-800/60">
+                  {{ sched.text }}
+                </div>
+
+                <div class="flex items-center gap-4 text-[11px] text-gray-500">
+                  <span v-if="sched.last_executed">最近执行: {{ sched.last_executed }}</span>
+                  <a v-if="sched.tweet_url" :href="sched.tweet_url" target="_blank" class="text-sky-400 hover:underline flex items-center gap-1">
+                    <i class="fa-brands fa-x-twitter"></i>
+                    <span>查看已发布推文</span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- 右侧动作按钮栏 -->
+              <div class="flex items-center gap-2 shrink-0">
+                <button 
+                  @click="triggerTwitterScheduleNow(sched)" 
+                  title="立即触发发送"
+                  class="text-xs px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-sky-300 border border-gray-700 transition flex items-center gap-1">
+                  <i class="fa-solid fa-play text-[10px]"></i>
+                  <span>立即发送</span>
+                </button>
+                <button 
+                  @click="toggleTwitterScheduleEnabled(sched)" 
+                  :class="sched.enabled ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30' : 'bg-gray-800 text-gray-500 border-gray-700'"
+                  class="text-xs px-3 py-1.5 rounded-lg border transition">
+                  {{ sched.enabled ? '已启用' : '已暂停' }}
+                </button>
+                <button 
+                  @click="deleteTwitterSchedule(sched.id)" 
+                  title="删除排期"
+                  class="text-xs px-2.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/30 transition">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= 子页面 3: API 授权与连接配置 ================= -->
+        <div v-if="twitterSubTab === 'settings'" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- 左侧：秘钥表单 (7 Cols) -->
+          <div class="lg:col-span-7 space-y-4">
+            <div class="glass-card rounded-xl p-5 space-y-4">
+              <h3 class="font-bold text-base text-white border-b border-gray-800 pb-2 flex items-center gap-2">
+                <i class="fa-brands fa-x-twitter text-sky-400"></i>
+                <span>Twitter / X API (OAuth 1.0a User Context) 凭据配置</span>
+              </h3>
+
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-xs font-semibold text-gray-300 mb-1">
+                    API Key (Consumer Key):
+                  </label>
+                  <input 
+                    type="password" 
+                    v-model="tempTwitter.api_key" 
+                    placeholder="从 X Developer Portal 复制的 API Key..."
+                    class="w-full glass-input rounded-lg p-2.5 text-xs font-mono">
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-gray-300 mb-1">
+                    API Key Secret (Consumer Secret):
+                  </label>
+                  <input 
+                    type="password" 
+                    v-model="tempTwitter.api_secret" 
+                    placeholder="从 X Developer Portal 复制的 API Key Secret..."
+                    class="w-full glass-input rounded-lg p-2.5 text-xs font-mono">
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-gray-300 mb-1">
+                    Access Token:
+                  </label>
+                  <input 
+                    type="password" 
+                    v-model="tempTwitter.access_token" 
+                    placeholder="生成的 Access Token..."
+                    class="w-full glass-input rounded-lg p-2.5 text-xs font-mono">
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-gray-300 mb-1">
+                    Access Token Secret:
+                  </label>
+                  <input 
+                    type="password" 
+                    v-model="tempTwitter.access_token_secret" 
+                    placeholder="生成的 Access Token Secret..."
+                    class="w-full glass-input rounded-lg p-2.5 text-xs font-mono">
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-gray-300 mb-1">
+                    Bearer Token (可选):
+                  </label>
+                  <input 
+                    type="password" 
+                    v-model="tempTwitter.bearer_token" 
+                    placeholder="可选填入 Bearer Token..."
+                    class="w-full glass-input rounded-lg p-2.5 text-xs font-mono">
+                </div>
+
+                <!-- 调度总开关 -->
+                <div class="pt-2">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" v-model="tempTwitter.enabled" class="rounded bg-gray-800 border-gray-700 text-sky-600">
+                    <span class="text-xs font-semibold text-gray-300">启用推特自动发文排期调度器总开关</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- 按钮动作栏 -->
+              <div class="flex items-center gap-3 pt-3 border-t border-gray-800">
+                <button 
+                  @click="verifyTwitterConnection" 
+                  :disabled="isVerifyingTwitter || !tempTwitter.api_key || !tempTwitter.access_token"
+                  class="px-4 py-2.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition disabled:opacity-50 flex items-center gap-2 shadow-sm">
+                  <i v-if="isVerifyingTwitter" class="fa-solid fa-spinner animate-spin"></i>
+                  <i v-else class="fa-solid fa-magnifying-glass"></i>
+                  <span>{{ isVerifyingTwitter ? '正在检测连接...' : '校验连接并获取推特账号' }}</span>
+                </button>
+
+                <button 
+                  @click="saveTwitterConfig" 
+                  :disabled="isSavingTwitterConfig"
+                  class="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-2 shadow-md">
+                  <i class="fa-solid fa-floppy-disk"></i>
+                  <span>保存推特配置</span>
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- 右侧：账号信息与配置指南 (5 Cols) -->
+          <div class="lg:col-span-5 space-y-4">
+            
+            <!-- 账号卡片 -->
+            <div class="glass-card rounded-xl p-5 space-y-3">
+              <h3 class="font-bold text-xs text-gray-300 uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-user-check text-sky-400"></i>
+                <span>当前绑定的推特账号</span>
+              </h3>
+
+              <div v-if="twitterAccount.username" class="p-4 rounded-xl bg-black border border-gray-800 space-y-3">
+                <div class="flex items-center gap-3">
+                  <img 
+                    :src="twitterAccount.profile_image_url || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'" 
+                    class="w-12 h-12 rounded-full border border-gray-700 object-cover bg-gray-800">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1">
+                      <span class="font-bold text-sm text-white truncate">{{ twitterAccount.name }}</span>
+                      <i v-if="twitterAccount.verified" class="fa-solid fa-circle-check text-sky-400 text-xs"></i>
+                    </div>
+                    <span class="text-xs text-gray-500 font-mono">@{{ twitterAccount.username }}</span>
+                  </div>
+                </div>
+
+                <p v-if="twitterAccount.description" class="text-xs text-gray-400 line-clamp-2">
+                  {{ twitterAccount.description }}
+                </p>
+
+                <div class="flex items-center gap-4 text-xs font-mono text-gray-400 pt-1 border-t border-gray-900">
+                  <span>关注者: <b class="text-white">{{ twitterAccount.followers_count || 0 }}</b></span>
+                  <a :href="'https://x.com/' + twitterAccount.username" target="_blank" class="ml-auto text-sky-400 hover:underline flex items-center gap-1 text-[11px]">
+                    <span>访问个人主页</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                  </a>
+                </div>
+              </div>
+
+              <div v-else class="p-6 rounded-xl bg-gray-900/40 border border-dashed border-gray-800 text-center space-y-2">
+                <i class="fa-brands fa-x-twitter text-3xl text-gray-600"></i>
+                <p class="text-xs text-gray-400">尚未绑定推特账号</p>
+                <p class="text-[11px] text-gray-500">在左侧填入秘钥后点击【校验连接并获取推特账号】。</p>
+              </div>
+            </div>
+
+            <!-- 获取秘钥保姆级指引 -->
+            <div class="glass-card rounded-xl p-5 space-y-3 text-xs">
+              <h4 class="font-bold text-gray-200 flex items-center gap-1.5">
+                <i class="fa-solid fa-circle-question text-sky-400"></i>
+                <span>如何申请推特 (X) API 秘钥？</span>
+              </h4>
+              <ol class="list-decimal list-inside space-y-2 text-gray-400 leading-relaxed">
+                <li>访问 <a href="https://developer.x.com/en/portal/dashboard" target="_blank" class="text-sky-400 hover:underline font-mono">developer.x.com</a> 并用推特账号登录。</li>
+                <li>创建一个应用 (App)，在 **User authentication settings** 中将 Permissions 设置为 <b class="text-amber-300">Read and Write</b>（发推必须具有 Write 权限）。</li>
+                <li>在 **Keys and Tokens** 选项卡中，生成 **API Key & Secret** 以及 **Access Token & Secret**。</li>
+                <li>将 4 个秘钥粘贴至左侧表单，点击保存即可享受全自动推特运营！</li>
+              </ol>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
     </main>
   </div>
 
@@ -1566,6 +2218,38 @@
         const isVerifyingBot = ref(false);
         const isDetectingTopics = ref(false);
         const detectResult = ref(null);
+
+        // Twitter / X (x.com) 模块状态
+        const twitterSubTab = ref('compose'); // 'compose' | 'pipeline' | 'settings'
+        const tempTwitter = ref({
+          api_key: '',
+          api_secret: '',
+          access_token: '',
+          access_token_secret: '',
+          bearer_token: '',
+          enabled: false,
+          account_info: {}
+        });
+        const twitterAccount = computed(() => tempTwitter.value.account_info || {});
+        const twitterSchedules = ref([]);
+        const twitterTemplates = ref([]);
+        const tweetDraftText = ref('');
+        const tweetDraftImage = ref(null);
+        const isPostingTweet = ref(false);
+        const isVerifyingTwitter = ref(false);
+        const isSavingTwitterConfig = ref(false);
+        const lastPostedTweetUrl = ref('');
+        const showNewScheduleForm = ref(false);
+        const newScheduleForm = ref({
+          title: '',
+          text: '',
+          scheduled_date: '',
+          scheduled_time: '10:00',
+          repeat: 'daily',
+          image_filename: null,
+          image_base64: null,
+          enabled: true
+        });
 
         // 计算属性
         const languageTopics = computed(() => {
@@ -2225,6 +2909,272 @@ Beware of scammers and impersonators posing as official SparkOne team members!
           }
         };
 
+        // ================= Twitter (X.com) 运营方法 =================
+        const loadTwitterConfig = async () => {
+          try {
+            const res = await fetch('/api/twitter/config');
+            const data = await res.json();
+            if (data.config) {
+              tempTwitter.value = {
+                ...tempTwitter.value,
+                ...data.config
+              };
+            }
+          } catch (e) {
+            console.error('加载推特配置失败:', e);
+          }
+        };
+
+        const loadTwitterTemplates = async () => {
+          try {
+            const res = await fetch('/api/twitter/templates');
+            const data = await res.json();
+            if (data.templates) {
+              twitterTemplates.value = data.templates;
+            }
+          } catch (e) {
+            console.error('加载推特模版失败:', e);
+          }
+        };
+
+        const loadTwitterSchedules = async () => {
+          try {
+            const res = await fetch('/api/twitter/schedules');
+            const data = await res.json();
+            if (data.schedules) {
+              twitterSchedules.value = data.schedules;
+            }
+          } catch (e) {
+            console.error('加载推特排期失败:', e);
+          }
+        };
+
+        const saveTwitterConfig = async () => {
+          isSavingTwitterConfig.value = true;
+          try {
+            const res = await fetch('/api/twitter/config', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(tempTwitter.value)
+            });
+            const data = await res.json();
+            if (data.success) {
+              tempTwitter.value = { ...tempTwitter.value, ...data.config };
+              alert('🎉 推特 (X.com) API 配置已成功保存！');
+            } else {
+              alert('保存失败: ' + (data.error || '未知错误'));
+            }
+          } catch (e) {
+            alert('保存异常: ' + e);
+          } finally {
+            isSavingTwitterConfig.value = false;
+          }
+        };
+
+        const verifyTwitterConnection = async () => {
+          isVerifyingTwitter.value = true;
+          try {
+            const res = await fetch('/api/twitter/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                api_key: tempTwitter.value.api_key,
+                api_secret: tempTwitter.value.api_secret,
+                access_token: tempTwitter.value.access_token,
+                access_token_secret: tempTwitter.value.access_token_secret
+              })
+            });
+            const data = await res.json();
+            if (data.success && data.user) {
+              tempTwitter.value.account_info = data.user;
+              tempTwitter.value.enabled = true;
+              alert(`🎉 成功连接推特！\n已识别账号: @${data.user.username} (${data.user.name})\n粉丝数: ${data.user.followers_count || 0}`);
+            } else {
+              alert('❌ 推特连接校验失败:\n' + (data.error || '未知错误'));
+            }
+          } catch (e) {
+            alert('校验异常: ' + e);
+          } finally {
+            isVerifyingTwitter.value = false;
+          }
+        };
+
+        const triggerTweetFileInput = () => {
+          const el = document.getElementById('tweet-image-input');
+          if (el) el.click();
+        };
+
+        const handleTweetImageUpload = (event) => {
+          const file = event.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            tweetDraftImage.value = {
+              filename: file.name,
+              base64: e.target.result
+            };
+          };
+          reader.readAsDataURL(file);
+        };
+
+        const removeTweetImage = () => {
+          tweetDraftImage.value = null;
+        };
+
+        const applyTweetTemplate = (tmpl) => {
+          tweetDraftText.value = tmpl.text;
+        };
+
+        const insertTweetEmoji = (emoji) => {
+          tweetDraftText.value += emoji;
+        };
+
+        const insertTweetHashtag = (tag) => {
+          if (!tweetDraftText.value.endsWith(' ') && tweetDraftText.value.length > 0) {
+            tweetDraftText.value += ' ';
+          }
+          tweetDraftText.value += tag + ' ';
+        };
+
+        const postTweetNow = async () => {
+          if (!tweetDraftText.value.trim()) {
+            alert('请输入推文内容！');
+            return;
+          }
+          isPostingTweet.value = true;
+          try {
+            const res = await fetch('/api/twitter/tweet', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                text: tweetDraftText.value,
+                image_filename: tweetDraftImage.value?.filename,
+                image_base64: tweetDraftImage.value?.base64
+              })
+            });
+            const data = await res.json();
+            if (data.success) {
+              lastPostedTweetUrl.value = data.url;
+              alert(`🎉 推文已成功发布至推特 (X.com)！\n推文 ID: ${data.tweet_id}\n链接: ${data.url}`);
+            } else {
+              alert('发推失败: ' + (data.error || '未知错误'));
+            }
+          } catch (e) {
+            alert('发推请求异常: ' + e);
+          } finally {
+            isPostingTweet.value = false;
+          }
+        };
+
+        const openScheduleFromDraft = () => {
+          newScheduleForm.value.text = tweetDraftText.value;
+          if (tweetDraftImage.value) {
+            newScheduleForm.value.image_filename = tweetDraftImage.value.filename;
+            newScheduleForm.value.image_base64 = tweetDraftImage.value.base64;
+          }
+          const tomorrow = new Date(Date.now() + 86400000);
+          newScheduleForm.value.scheduled_date = tomorrow.toISOString().substring(0, 10);
+          showNewScheduleForm.value = true;
+          twitterSubTab.value = 'pipeline';
+        };
+
+        const triggerNewScheduleFileInput = () => {
+          const el = document.getElementById('new-sched-image-input');
+          if (el) el.click();
+        };
+
+        const handleNewScheduleImageUpload = (event) => {
+          const file = event.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            newScheduleForm.value.image_base64 = e.target.result;
+            newScheduleForm.value.image_filename = file.name;
+          };
+          reader.readAsDataURL(file);
+        };
+
+        const removeNewScheduleImage = () => {
+          newScheduleForm.value.image_base64 = null;
+          newScheduleForm.value.image_filename = null;
+        };
+
+        const createTwitterSchedule = async () => {
+          if (!newScheduleForm.value.text?.trim()) {
+            alert('请输入排期推文正文！');
+            return;
+          }
+          try {
+            const res = await fetch('/api/twitter/schedules', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(newScheduleForm.value)
+            });
+            const data = await res.json();
+            if (data.success) {
+              await loadTwitterSchedules();
+              showNewScheduleForm.value = false;
+              alert('🎉 新发文排期已成功加入自动调度流水线！');
+              newScheduleForm.value = {
+                title: '',
+                text: '',
+                scheduled_date: '',
+                scheduled_time: '10:00',
+                repeat: 'daily',
+                image_filename: null,
+                image_base64: null,
+                enabled: true
+              };
+            } else {
+              alert('创建排期失败: ' + (data.error || '未知错误'));
+            }
+          } catch (e) {
+            alert('创建排期异常: ' + e);
+          }
+        };
+
+        const deleteTwitterSchedule = async (id) => {
+          if (!confirm('确定要删除此条推特排期任务吗？')) return;
+          try {
+            const res = await fetch(`/api/twitter/schedules/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+              await loadTwitterSchedules();
+            }
+          } catch (e) {
+            alert('删除异常: ' + e);
+          }
+        };
+
+        const toggleTwitterScheduleEnabled = async (item) => {
+          item.enabled = !item.enabled;
+          try {
+            await fetch(`/api/twitter/schedules/${item.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ enabled: item.enabled })
+            });
+          } catch (e) {
+            console.error('更新排期开关失败:', e);
+          }
+        };
+
+        const triggerTwitterScheduleNow = async (item) => {
+          if (!confirm(`确定要立即向推特发送 【${item.title}】 吗？`)) return;
+          try {
+            const res = await fetch(`/api/twitter/schedules/${item.id}/trigger`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+              await loadTwitterSchedules();
+              alert(`🎉 推文已发送成功！\n推文 ID: ${data.tweet_id}\n链接: ${data.url}`);
+            } else {
+              alert('发送失败: ' + (data.error || '未知错误'));
+            }
+          } catch (e) {
+            alert('触发异常: ' + e);
+          }
+        };
+
         // 市场模块：拉取数据预览
         const fetchMarketPreview = async (type) => {
           try {
@@ -2444,6 +3394,9 @@ Beware of scammers and impersonators posing as official SparkOne team members!
           loadConfig();
           loadSchedulerLogs();
           loadCampaign7Days();
+          loadTwitterConfig();
+          loadTwitterTemplates();
+          loadTwitterSchedules();
         });
 
         return {
@@ -2478,6 +3431,41 @@ Beware of scammers and impersonators posing as official SparkOne team members!
           handleTranslateDay,
           handleTranslateAllDays,
           triggerDayNow,
+          // Twitter / X 模块
+          twitterSubTab,
+          tempTwitter,
+          twitterAccount,
+          twitterSchedules,
+          twitterTemplates,
+          tweetDraftText,
+          tweetDraftImage,
+          isPostingTweet,
+          isVerifyingTwitter,
+          isSavingTwitterConfig,
+          lastPostedTweetUrl,
+          showNewScheduleForm,
+          newScheduleForm,
+          loadTwitterConfig,
+          loadTwitterTemplates,
+          loadTwitterSchedules,
+          saveTwitterConfig,
+          verifyTwitterConnection,
+          triggerTweetFileInput,
+          handleTweetImageUpload,
+          removeTweetImage,
+          applyTweetTemplate,
+          insertTweetEmoji,
+          insertTweetHashtag,
+          postTweetNow,
+          openScheduleFromDraft,
+          triggerNewScheduleFileInput,
+          handleNewScheduleImageUpload,
+          removeNewScheduleImage,
+          createTwitterSchedule,
+          deleteTwitterSchedule,
+          toggleTwitterScheduleEnabled,
+          triggerTwitterScheduleNow,
+          // 其它社区/市场模块
           selectedHubTopic,
           hubContentText,
           hubImage,
