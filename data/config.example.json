@@ -371,6 +371,16 @@
       "description": "每周一至周五 21:30 播报道琼斯、标普500、纳斯达克行情",
       "enabled": false,
       "auto_send": true
+    },
+    {
+      "id": "sched_sparkone_pitch_general",
+      "name": "🌟 SPARK ONE 核心优势与项目卖点 (General 综合专区轮播宣传)",
+      "target_topic_id": "general_chat",
+      "market_type": "company_advantages",
+      "cron": "0 11 * * *",
+      "description": "每天定时向 💬 GENERAL CHAT 综合话题轮播推送 SPARK ONE 核心商业优势、100%实物黄金RWA背书、5大AI量化引擎及公司资管实力，强化社群认知与品牌信任",
+      "enabled": true,
+      "auto_send": true
     }
   ]
 }

@@ -841,8 +841,17 @@
               </div>
 
               <!-- 常用模版快速填充 -->
-              <div class="flex items-center gap-1">
+              <div class="flex flex-wrap items-center gap-1.5">
                 <span class="text-xs text-gray-400 mr-1">快捷模板:</span>
+                <button @click="applyTemplate('pitch')" class="px-2.5 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 text-[11px] text-indigo-300 border border-indigo-500/40 font-bold flex items-center gap-1 shadow-sm">
+                  🌟 资管与实力 (General)
+                </button>
+                <button @click="applyTemplate('pitch_rwa')" class="px-2.5 py-1 rounded bg-amber-600/30 hover:bg-amber-600/50 text-[11px] text-amber-300 border border-amber-500/40 font-bold flex items-center gap-1 shadow-sm">
+                  🪙 黄金RWA卖点 (General)
+                </button>
+                <button @click="applyTemplate('pitch_ai')" class="px-2.5 py-1 rounded bg-cyan-600/30 hover:bg-cyan-600/50 text-[11px] text-cyan-300 border border-cyan-500/40 font-bold flex items-center gap-1 shadow-sm">
+                  🤖 AI 5大引擎 (General)
+                </button>
                 <button @click="applyTemplate('security')" class="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700 text-[11px] text-rose-300 border border-rose-500/30">
                   🚨 安全防骗
                 </button>
@@ -2283,7 +2292,53 @@
 
         // 快捷专业英文模板库 (English Professional Templates)
         const applyTemplate = (type) => {
-          if (type === 'security') {
+          if (type === 'pitch') {
+            const genTopic = config.value.topics.find(t => t.id === 'general_chat');
+            if (genTopic) selectedHubTopic.value = genTopic;
+            hubContentText.value = 
+`🏛️ <b>SPARK ONE • Institutional Asset Management Architecture</b>
+
+<b>Why Leading Investors Choose SPARK ONE:</b>
+
+• 🏢 <b>Institutional Pedigree</b>: Powered by SPARK UNION CAPITAL INC., combining traditional Wall Street hedge fund methodology with Web3 technological efficiency.
+• ⚖️ <b>Regulatory Compliance First</b>: Adhering to international asset management governance standards, multi-tiered auditing, and cold-vault capital segregation.
+• 📊 <b>Cross-Asset Dominance</b>: Seamlessly synthesizing Physical Gold (RWA), Sovereign FX, Equities, and Digital Assets into one intelligent risk-adjusted portfolio.
+• 🎯 <b>Our Mission</b>: Demolishing financial silos to bring institutional-grade alpha, transparency, and liquidity to global Web3 participants.
+
+🌐 <b>Official Portal:</b> https://sparkone.io
+#SparkOne #InstitutionalGrade #FinTech #AssetManagement #Web3`;
+          } else if (type === 'pitch_rwa') {
+            const genTopic = config.value.topics.find(t => t.id === 'general_chat');
+            if (genTopic) selectedHubTopic.value = genTopic;
+            hubContentText.value =
+`🪙 <b>THE POWER OF RWA • 100% Physical Gold Backing</b>
+
+In an era of currency devaluation and macroeconomic uncertainty, <b>Gold remains the ultimate store of value</b>. SPARK ONE bridges traditional gold with decentralized finance:
+
+• 🏛️ <b>100% Physical Vault Backing</b>: Every digital gold unit corresponds directly to allocated, LBMA-certified physical gold bars stored in top-tier global vaults.
+• ⚡ <b>24/7 Instant Liquidity</b>: Eliminate traditional custodian delays, high assay fees, and settlement friction. Move gold on-chain with instant finality.
+• 🛡️ <b>Unshakable Inflation Shield</b>: Protect your capital against purchasing power erosion while earning algorithmic quantitative yield.
+• 🔍 <b>Cryptographic Transparency</b>: On-chain verifiable proof-of-reserves audited by third-party accounting standards.
+
+💡 <i>Real physical stability meets the speed of blockchain.</i>
+#Gold #RWA #PAXG #XAUT #Tokenization #SparkOne`;
+          } else if (type === 'pitch_ai') {
+            const genTopic = config.value.topics.find(t => t.id === 'general_chat');
+            if (genTopic) selectedHubTopic.value = genTopic;
+            hubContentText.value =
+`🧠 <b>THE SPARK AI ADVANTAGE • 5 Proprietary Quant Engines</b>
+
+SPARK AI is not a generic bot — it is an enterprise multi-agent quantitative framework engineered for multi-asset markets:
+
+🟡 <b>AURORA</b> • Macro Liquidity & Real Yield Correlation Engine
+📈 <b>TITAN</b> • Multi-Timeframe Trend & Momentum Clustering Engine
+🛡️ <b>ORION</b> • Central Immune System & Strict Left-Tail Drawdown Guard
+⚡ <b>PHOENIX</b> • Dynamic Execution & Adaptive Machine Learning Optimization
+🌐 <b>ATLAS</b> • Global Multi-Asset Sharpe Ratio Rebalancing Engine
+
+📊 <b>Algorithms eliminate human emotion. Mathematical probability drives sustained growth.</b>
+#SparkAI #QuantitativeTrading #AlgorithmicFinance #ArtificialIntelligence #FinTech`;
+          } else if (type === 'security') {
             hubContentText.value = 
 `🚨 <b>SPARK ONE • Official Security & Anti-Phishing Alert</b>
 

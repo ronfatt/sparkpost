@@ -454,6 +454,51 @@ async def send_spark_ai_content(payload: SparkAISendModel):
         parse_mode="HTML"
     )
 
+# ================= SPARK ONE 核心卖点与公司优势宣传接口 =================
+from backend.spark_pitch_service import SparkPitchService
+
+class PitchSendModel(BaseModel):
+    pitch_id: Optional[str] = None
+    target_topic_id: Optional[str] = "general_chat"
+    custom_text: Optional[str] = None
+
+@app.get("/api/pitch/templates")
+def get_pitch_templates():
+    """获取所有官方卖点宣传文案列表"""
+    return {"success": True, "templates": SparkPitchService.get_all_pitches()}
+
+@app.post("/api/pitch/send")
+async def send_pitch_content(payload: PitchSendModel):
+    """一键向指定话题（默认 General Topic）发布公司核心卖点宣传"""
+    cfg = load_config()
+    token = cfg.get("telegram", {}).get("bot_token")
+    chat_id = cfg.get("telegram", {}).get("chat_id")
+
+    if not token or not chat_id:
+        raise HTTPException(status_code=400, detail="请先配置 Telegram Bot Token 和 群组 Chat ID")
+
+    topics = cfg.get("topics", [])
+    target_topic = next((t for t in topics if t["id"] == (payload.target_topic_id or "general_chat")), None)
+    thread_id = target_topic.get("thread_id") if target_topic else None
+
+    if payload.custom_text:
+        text = payload.custom_text
+        title = "自定义宣传文案"
+    else:
+        p = SparkPitchService.get_pitch_by_id(payload.pitch_id) if payload.pitch_id else SparkPitchService.get_next_pitch_post()
+        text = p["text"]
+        title = p["title"]
+
+    res = await TelegramService.send_message(
+        token=token,
+        chat_id=chat_id,
+        text=text,
+        thread_id=thread_id,
+        parse_mode="HTML"
+    )
+    res["pitch_title"] = title
+    return res
+
 # ================= 定时任务接口 =================
 
 @app.post("/api/scheduler/trigger/{schedule_id}")

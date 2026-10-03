@@ -76,6 +76,11 @@ class SchedulerService:
             elif market_type == "spark_ai_intel":
                 from backend.spark_ai_service import SparkAIService
                 msg_text = await SparkAIService.generate_market_intelligence()
+            elif market_type in ("company_advantages", "sparkone_pitch", "spark_pitch"):
+                from backend.spark_pitch_service import SparkPitchService
+                pitch_data = SparkPitchService.get_next_pitch_post()
+                msg_text = pitch_data["text"]
+                sched_name = f"{sched_name} [{pitch_data['title']}]"
             elif market_type in ("asia_stocks", "us_stocks", "global_stocks"):
                 res = await MarketService.get_global_stocks_data()
                 msg_text = res["telegram_message"]
