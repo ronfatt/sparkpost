@@ -28,7 +28,7 @@ DEFAULT_TWEET_TEMPLATES = [
         "id": "tw_tmpl_1",
         "title": "🪙 区块链黄金 RWA 实物背书推文",
         "category": "rwa",
-        "text": "🪙 Physical Gold meets On-Chain Liquidity.\n\nEvery tokenized ounce of gold is 100% backed by LBMA-certified vaults. Protect your digital portfolio against inflation with instant 24/7 liquidity.\n\n🌐 Explore: https://sparkone.io\n\n#Gold #RWA #PAXG #Crypto #Web3 #Tokenization"
+        "text": "🪙 Physical Gold meets On-Chain Liquidity.\n\nEvery tokenized ounce of gold is 100% backed by LBMA-certified vaults. Protect your digital portfolio against inflation with instant 24/7 liquidity.\n\n🌐 Explore: https://sparkunioncapital.com/\n\n#Gold #RWA #PAXG #Crypto #Web3 #Tokenization"
     },
     {
         "id": "tw_tmpl_2",
@@ -40,7 +40,7 @@ DEFAULT_TWEET_TEMPLATES = [
         "id": "tw_tmpl_3",
         "title": "🚀 社区生态起航与全球节点激励",
         "category": "community",
-        "text": "🚀 SPARK ONE Global Ecosystem is expanding rapidly!\n\n11 multilingual national hubs are now live on Telegram. Join community missions, earn ecosystem points, and participate in node rewards.\n\n👉 Join official hubs: https://sparkone.io\n\n#SparkOne #Airdrop #Community #DeFi #Web3"
+        "text": "🚀 SPARK ONE Global Ecosystem is expanding rapidly!\n\n11 multilingual national hubs are now live on Telegram. Join community missions, earn ecosystem points, and participate in node rewards.\n\n👉 Join official hubs: https://sparkunioncapital.com/\n\n#SparkOne #Airdrop #Community #DeFi #Web3"
     },
     {
         "id": "tw_tmpl_4",
@@ -266,7 +266,7 @@ class TwitterService:
                 "id": "tw_daily_brand",
                 "title": "🏛️ SparkOne 官方项目核心卖点 (白皮书/PPT深度)",
                 "post_type": "sparkone_brand",
-                "text": "🏛️ SPARK ONE: Institutional Pedigree Meets Web3\n\nBacked by SPARK UNION CAPITAL INC., SPARK ONE is bridging Wall Street hedge fund rigor with decentralized finance:\n\n• Multi-Tiered Asset Management: Institutional risk controls engineered from day one\n• Cross-Asset Coverage: Physical Gold (RWA), Sovereign Equities & Digital Assets\n• Regulatory Governance: Bank-grade custody with segregated cold-vault architecture\n\nDemolishing financial silos to democratize institutional alpha 🌐\n\n👉 Explore: https://sparkone.io\n#SparkOne #AssetManagement #RWA #Web3 #FinTech",
+                "text": "🏛️ SPARK ONE: Institutional Pedigree Meets Web3\n\nBacked by SPARK UNION CAPITAL INC., SPARK ONE is bridging Wall Street hedge fund rigor with decentralized finance:\n\n• Multi-Tiered Asset Management: Institutional risk controls engineered from day one\n• Cross-Asset Coverage: Physical Gold (RWA), Sovereign Equities & Digital Assets\n• Regulatory Governance: Bank-grade custody with segregated cold-vault architecture\n\nDemolishing financial silos to democratize institutional alpha 🌐\n\n👉 Explore: https://sparkunioncapital.com/\n#SparkOne #AssetManagement #RWA #Web3 #FinTech",
                 "image_filename": None,
                 "image_base64": None,
                 "scheduled_date": today_str,
@@ -284,7 +284,7 @@ class TwitterService:
                 "id": "tw_daily_crypto_news",
                 "title": "⚡ 全球区块链重大新闻速递 (实时抓取+SPARK简析)",
                 "post_type": "crypto_news",
-                "text": "⚡ CRYPTO & BLOCKCHAIN HEADLINE BREAKING\n\nReal-time global crypto and institutional adoption news with SPARK AI quantitative perspective.\n\nStay ahead of macro market flows with SPARK ONE 🌐\n\n👉 Platform: https://sparkone.io\n#CryptoNews #Bitcoin #Blockchain #Web3 #Macro #SparkOne",
+                "text": "⚡ CRYPTO & BLOCKCHAIN HEADLINE BREAKING\n\nReal-time global crypto and institutional adoption news with SPARK AI quantitative perspective.\n\nStay ahead of macro market flows with SPARK ONE 🌐\n\n👉 Platform: https://sparkunioncapital.com/\n#CryptoNews #Bitcoin #Blockchain #Web3 #Macro #SparkOne",
                 "image_filename": None,
                 "image_base64": None,
                 "scheduled_date": today_str,
@@ -302,7 +302,7 @@ class TwitterService:
                 "id": "tw_daily_market_alpha",
                 "title": "📊 跨资产实时数据 (美股/代币/现货黄金) + SPARK量化投研观点",
                 "post_type": "market_alpha",
-                "text": "📊 SPARK ONE • GLOBAL ASSET RADAR & REAL-TIME DATA\n\n• Gold (RWA): Live bullion quote\n• Bitcoin / Ethereum: Real-time crypto quotes\n• NVIDIA / Apple: Wall Street equity beta\n\nSPARK AI Quant Outlook & Macro Alpha.\n\n👉 Platform: https://sparkone.io\n#StockMarket #Crypto #Gold #QuantTrading #Alpha #SparkOne",
+                "text": "📊 SPARK ONE • GLOBAL ASSET RADAR & REAL-TIME DATA\n\n• Gold (RWA): Live bullion quote\n• Bitcoin / Ethereum: Real-time crypto quotes\n• NVIDIA / Apple: Wall Street equity beta\n\nSPARK AI Quant Outlook & Macro Alpha.\n\n👉 Platform: https://sparkunioncapital.com/\n#StockMarket #Crypto #Gold #QuantTrading #Alpha #SparkOne",
                 "image_filename": None,
                 "image_base64": None,
                 "scheduled_date": today_str,

@@ -115,7 +115,7 @@ class CardGenerator:
         draw.text((90, 990), "Tokenized real-world gold (RWA) bridges DeFi liquidity with safe-haven stability.", fill="#cbd5e1", font=cls._get_font(15))
         draw.text((90, 1015), "Auto-refreshed every 1 hour • Precision on-chain price tracking.", fill="#94a3b8", font=cls._get_font(14))
 
-        draw.text((60, 1090), "Official Portal: https://sparkone.io", fill="#64748b", font=cls._get_font(15))
+        draw.text((60, 1090), "Official Portal: https://sparkunioncapital.com/", fill="#64748b", font=cls._get_font(15))
         draw.text((width-340, 1090), "Hourly Automated Dispatch Active", fill="#eab308", font=cls._get_font(15, bold=True))
 
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -176,7 +176,7 @@ class CardGenerator:
         draw.text((90, 915), "📊 Market Observation:", fill="#38bdf8", font=cls._get_font(16, bold=True))
         draw.text((90, 945), "Global liquidity and sector rotation remain key drivers. Stay disciplined.", fill="#94a3b8", font=cls._get_font(16))
 
-        draw.text((60, 1030), "Official Portal: https://sparkone.io", fill="#64748b", font=cls._get_font(15))
+        draw.text((60, 1030), "Official Portal: https://sparkunioncapital.com/", fill="#64748b", font=cls._get_font(15))
         draw.text((width-320, 1030), "Never DM First • Anti-Scam Verified", fill="#38bdf8", font=cls._get_font(15, bold=True))
 
         os.makedirs(os.path.dirname(output_path), exist_ok=True)

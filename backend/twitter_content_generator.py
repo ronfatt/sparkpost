@@ -32,7 +32,7 @@ class TwitterContentGenerator:
                 "• <b>Cross-Asset Coverage</b>: Physical Gold (RWA), Sovereign Equities & Digital Assets\n"
                 "• <b>Regulatory Governance</b>: Bank-grade custody with segregated cold-vault architecture\n\n"
                 "Demolishing financial silos to democratize institutional alpha 🌐\n\n"
-                "👉 Explore: https://sparkone.io\n"
+                "👉 Explore: https://sparkunioncapital.com/\n"
                 "#SparkOne #AssetManagement #RWA #Web3 #FinTech"
             )
         },
@@ -47,7 +47,7 @@ class TwitterContentGenerator:
                 "• <b>24/7 Instant Finality</b>: Move gold collateral on-chain across borders in seconds\n"
                 "• <b>Inflation Resistance</b>: Safeguarding purchasing power while capturing algorithmic quant yield\n\n"
                 "Real-world value meets on-chain velocity 🛡️\n\n"
-                "👉 Read Whitepaper: https://sparkone.io\n"
+                "👉 Read Whitepaper: https://sparkunioncapital.com/\n"
                 "#Gold #RWA #Tokenization #DigitalWealth #SparkOne"
             )
         },
@@ -62,6 +62,7 @@ class TwitterContentGenerator:
                 "• <b>Real Yield Correlation</b>: Tracking TIPS spreads vs bullion pricing in real-time\n"
                 "• <b>RWA Liquidity Mapping</b>: Monitoring on-chain collateralization ratios\n\n"
                 "Algorithms replace emotional bias. Math drives consistency 📊\n\n"
+                "👉 Explore: https://sparkunioncapital.com/\n"
                 "#SparkAI #AURORA #Quant #AlgorithmicTrading #FinTech"
             )
         },
@@ -76,6 +77,7 @@ class TwitterContentGenerator:
                 "• <b>Adaptive Channels</b>: Dynamically adjusting volatility envelopes across 15m to 1W charts\n"
                 "• <b>Cross-Market Momentum</b>: Syncing equity beta with crypto volatility\n\n"
                 "Gain institutional-grade market visibility with SPARK ONE ⚡\n\n"
+                "👉 Platform: https://sparkunioncapital.com/\n"
                 "#TITAN #SparkAI #MarketStructure #OrderFlow #Crypto"
             )
         },
@@ -90,6 +92,7 @@ class TwitterContentGenerator:
                 "• <b>Stress-Test Matrix</b>: Simulated 2008 & 2020 black swan scenario survival\n"
                 "• <b>Drawdown Capping</b>: Risk parameters locked before any strategy executes\n\n"
                 "Capital preservation is our highest operational mandate 🔒\n\n"
+                "👉 Risk Architecture: https://sparkunioncapital.com/\n"
                 "#RiskManagement #ORION #QuantDesk #DrawdownControl #SparkOne"
             )
         },
@@ -104,6 +107,7 @@ class TwitterContentGenerator:
                 "• <b>ATLAS</b>: Global asset allocation maximizing Sharpe ratio across Gold, BTC & Equities\n"
                 "• <b>Zero Human Ego</b>: Pure algorithmic execution calibrated 24/7/365\n\n"
                 "The future of intelligent asset management is here 🚀\n\n"
+                "👉 Institutional Alpha: https://sparkunioncapital.com/\n"
                 "#ATLAS #PHOENIX #MachineLearning #SharpeRatio #FinTech"
             )
         },
@@ -118,7 +122,7 @@ class TwitterContentGenerator:
                 "🇪🇸 Spanish • 🇷🇺 Russian • 🇯🇵 Japanese • 🇩🇪 German\n"
                 "🇫🇷 French • 🇰🇷 Korean • 🇻🇳 Vietnamese\n\n"
                 "Localized intelligence with global institutional perspective ✨\n\n"
-                "👉 Join your native community: https://sparkone.io\n"
+                "👉 Join your native community: https://sparkunioncapital.com/\n"
                 "#GlobalCommunity #Web3 #CryptoEcosystem #SparkOne"
             )
         },
@@ -133,7 +137,7 @@ class TwitterContentGenerator:
                 "• <b>Bloomberg-Grade AI Feed</b>: Live quantitative market intelligence alerts\n"
                 "• <b>Instant RWA Gold Conversion</b>: Seamless bullion on-chain custody\n"
                 "• <b>Institutional Transparency</b>: Real-time PnL & Sharpe audits\n\n"
-                "👉 Download now: https://sparkone.io/download\n"
+                "👉 Download now: https://sparkunioncapital.com/\n"
                 "#SparkOneApp #MobileTrading #FinTech #WealthTech"
             )
         },
@@ -148,6 +152,7 @@ class TwitterContentGenerator:
                 "• A 50% loss requires a 100% gain to recover\n"
                 "• An 80% loss requires a 400% gain to recover\n\n"
                 "SPARK ONE locks risk parameters first. By capping drawdowns, compound interest creates sustainable long-term alpha 📈\n\n"
+                "👉 Learn More: https://sparkunioncapital.com/\n"
                 "#TradingPsychology #Compounding #QuantitativeTrading #SparkOne"
             )
         },
@@ -163,6 +168,7 @@ class TwitterContentGenerator:
                 "• <b>Formally Verified Contracts</b>: Audited by top-tier Web3 cybersecurity firms\n"
                 "• <b>24/7 AI Mempool Telemetry</b>: Real-time threat detection\n\n"
                 "Grow your wealth with absolute institutional peace of mind 🛡️\n\n"
+                "👉 Security Architecture: https://sparkunioncapital.com/\n"
                 "#Web3Security #MultiSig #ColdStorage #VaultSecurity #SparkOne"
             )
         }
@@ -224,17 +230,17 @@ class TwitterContentGenerator:
                 {
                     "title": "Global Central Banks Accelerate Gold Purchases Alongside Digital Asset Allocations",
                     "desc": "Sovereign reserves continue diversifying away from single-fiat reliance into hard physical assets and institutional blockchain rails.",
-                    "link": "https://sparkone.io"
+                    "link": "https://sparkunioncapital.com/"
                 },
                 {
                     "title": "Institutional RWA Tokenization Market Capitalization Hits Record Milestone",
                     "desc": "Tokenized commodities and treasury products witness strong liquidity inflows driven by cross-border settlement efficiency.",
-                    "link": "https://sparkone.io"
+                    "link": "https://sparkunioncapital.com/"
                 },
                 {
                     "title": "Bitcoin Derivative Open Interest Rebalances as Spot ETF Inflows Stabilize",
                     "desc": "Options funding rates reset to neutral levels, establishing a structural consolidation floor for macro asset allocators.",
-                    "link": "https://sparkone.io"
+                    "link": "https://sparkunioncapital.com/"
                 }
             ]
             picked = random.choice(fallback_news)
@@ -254,7 +260,8 @@ class TwitterContentGenerator:
             f"📰 <b>{picked['title']}</b>\n\n"
             f"• <b>Key Development</b>: {picked['desc']}\n"
             f"• 💡 <b>{perspective}</b>\n\n"
-            f"Stay ahead of macro market flows with SPARK ONE 🌐\n\n"
+            f"Stay ahead of macro market flows with SPARK ONE 🌐\n"
+            f"👉 Live Alpha Desk: https://sparkunioncapital.com/\n\n"
             f"#CryptoNews #Bitcoin #Blockchain #Web3 #Macro #SparkOne"
         )
 
@@ -336,7 +343,7 @@ class TwitterContentGenerator:
             f"{quotes_block}\n\n"
             f"{insight}\n\n"
             f"Transform market volatility into disciplined alpha 🚀\n\n"
-            f"👉 Platform: https://sparkone.io\n"
+            f"👉 Platform: https://sparkunioncapital.com/\n"
             f"#StockMarket #Crypto #Gold #QuantTrading #Alpha #SparkOne"
         )
 

@@ -22,7 +22,7 @@ class SparkPitchService:
                 "• ⚖️ <b>Regulatory Compliance First</b>: Adhering to international asset management governance standards, multi-tiered auditing, and cold-vault capital segregation.\n"
                 "• 📊 <b>Cross-Asset Dominance</b>: Seamlessly synthesizing Physical Gold (RWA), Sovereign FX, Equities, and Digital Assets into one intelligent risk-adjusted portfolio.\n"
                 "• 🎯 <b>Our Mission</b>: Demolishing financial silos to bring institutional-grade alpha, transparency, and liquidity to global Web3 participants.\n\n"
-                "🌐 <b>Official Portal:</b> https://sparkone.io\n\n"
+                "🌐 <b>Official Portal:</b> https://sparkunioncapital.com/\n\n"
                 "#SparkOne #InstitutionalGrade #FinTech #AssetManagement #Web3"
             )
         },
@@ -117,7 +117,7 @@ class SparkPitchService:
                 "🤖 <b>Integrated SPARK AI Feed</b>: Real-time quantitative signals, macro trend alerts, and risk assessments.\n"
                 "🪙 <b>Seamless RWA Gold Custody</b>: Instant conversion between digital liquidity and physical gold token holdings.\n"
                 "📊 <b>Transparent Portfolio Telemetry</b>: Real-time PnL analytics, Sharpe ratio audits, and drawdown metrics.\n\n"
-                "👉 Download the official build: https://sparkone.io/download\n\n"
+                "👉 Download the official build: https://sparkunioncapital.com/\n\n"
                 "#SparkOneApp #FinTech #MobileTrading #WealthTech #SmartInvesting"
             )
         }
