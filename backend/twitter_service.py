@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import base64
 import logging
@@ -9,6 +10,7 @@ import requests
 from requests_oauthlib import OAuth1
 
 from .config import load_config, save_config, update_twitter_settings
+from .twitter_content_generator import TwitterContentGenerator
 
 logger = logging.getLogger("twitter_service")
 
@@ -190,6 +192,10 @@ class TwitterService:
         if not text or not text.strip():
             return {"success": False, "error": "推文内容不能为空！"}
 
+        # 确保推文文本彻底清理所有 HTML 标签并转换特殊实体（推特 v2 原生仅支持纯文本）
+        clean_text = re.sub(r"<[^>]+>", "", text).strip()
+        clean_text = clean_text.replace("&amp;", "&").replace("&quot;", '"').replace("&#39;", "'").replace("&lt;", "<").replace("&gt;", ">")
+
         media_id = None
         img_bytes = cls._extract_media_bytes(image_path=image_path, image_base64=image_base64)
         if img_bytes:
@@ -197,7 +203,7 @@ class TwitterService:
             if not media_id:
                 logger.warning("推特配图上传失败，将尝试纯文本发布")
 
-        payload: Dict[str, Any] = {"text": text.strip()}
+        payload: Dict[str, Any] = {"text": clean_text}
         if media_id:
             payload["media"] = {"media_ids": [media_id]}
 
@@ -251,27 +257,20 @@ class TwitterService:
     # ================= 自动发文排期 (Scheduled Pipeline) =================
 
     @classmethod
-    def load_schedules(cls) -> List[Dict[str, Any]]:
-        """读取所有已制定的自动发文排期任务"""
-        path = cls._get_schedules_path()
-        if path.exists():
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except Exception as e:
-                logger.error(f"读取推特排期失败: {e}")
-
-        # 如果没有排期，生成默认初始化任务
+    def get_default_daily_schedules(cls) -> List[Dict[str, Any]]:
+        """获取官方推荐的每日 3 次推特自动化发文排期 (10:00 白皮书卖点 / 14:30 区块链要闻 / 21:00 跨资产实时数据与量化观点)"""
         now = datetime.now()
-        defaults = [
+        today_str = now.strftime("%Y-%m-%d")
+        return [
             {
-                "id": "tw_sched_1",
-                "title": "SPARK ONE 每日宏观与黄金 RWA 晨报",
-                "text": "🪙 Physical Gold meets On-Chain Liquidity.\n\nEvery tokenized ounce of gold is 100% backed by LBMA-certified vaults. Protect your digital portfolio against inflation with instant 24/7 liquidity.\n\n🌐 Explore: https://sparkone.io\n\n#Gold #RWA #PAXG #Crypto #Web3 #Tokenization",
+                "id": "tw_daily_brand",
+                "title": "🏛️ SparkOne 官方项目核心卖点 (白皮书/PPT深度)",
+                "post_type": "sparkone_brand",
+                "text": "🏛️ SPARK ONE: Institutional Pedigree Meets Web3\n\nBacked by SPARK UNION CAPITAL INC., SPARK ONE is bridging Wall Street hedge fund rigor with decentralized finance:\n\n• Multi-Tiered Asset Management: Institutional risk controls engineered from day one\n• Cross-Asset Coverage: Physical Gold (RWA), Sovereign Equities & Digital Assets\n• Regulatory Governance: Bank-grade custody with segregated cold-vault architecture\n\nDemolishing financial silos to democratize institutional alpha 🌐\n\n👉 Explore: https://sparkone.io\n#SparkOne #AssetManagement #RWA #Web3 #FinTech",
                 "image_filename": None,
                 "image_base64": None,
-                "scheduled_date": (now + timedelta(days=1)).strftime("%Y-%m-%d"),
-                "scheduled_time": "10:30",
+                "scheduled_date": today_str,
+                "scheduled_time": "10:00",
                 "repeat": "daily",
                 "enabled": True,
                 "status": "pending",
@@ -282,13 +281,32 @@ class TwitterService:
                 "created_at": now.strftime("%Y-%m-%d %H:%M:%S")
             },
             {
-                "id": "tw_sched_2",
-                "title": "SPARK AI 彭博量化多资产脉搏",
-                "text": "🤖 SPARK AI Daily Market Pulse:\n\nOur 5 quantitative engines just completed global multi-asset volatility scans.\n\n• Gold: Consolidating near key structural support\n• BTC/ETH: Derivatives funding rates resetting\n• Macro: Eyes on Fed rate projections\n\nFull desk alpha inside the terminal 📊\n\n#SparkOne #AI #Quant #Bitcoin #Trading",
+                "id": "tw_daily_crypto_news",
+                "title": "⚡ 全球区块链重大新闻速递 (实时抓取+SPARK简析)",
+                "post_type": "crypto_news",
+                "text": "⚡ CRYPTO & BLOCKCHAIN HEADLINE BREAKING\n\nReal-time global crypto and institutional adoption news with SPARK AI quantitative perspective.\n\nStay ahead of macro market flows with SPARK ONE 🌐\n\n👉 Platform: https://sparkone.io\n#CryptoNews #Bitcoin #Blockchain #Web3 #Macro #SparkOne",
                 "image_filename": None,
                 "image_base64": None,
-                "scheduled_date": (now + timedelta(days=2)).strftime("%Y-%m-%d"),
-                "scheduled_time": "16:00",
+                "scheduled_date": today_str,
+                "scheduled_time": "14:30",
+                "repeat": "daily",
+                "enabled": True,
+                "status": "pending",
+                "last_executed": None,
+                "tweet_id": None,
+                "tweet_url": None,
+                "error_msg": None,
+                "created_at": now.strftime("%Y-%m-%d %H:%M:%S")
+            },
+            {
+                "id": "tw_daily_market_alpha",
+                "title": "📊 跨资产实时数据 (美股/代币/现货黄金) + SPARK量化投研观点",
+                "post_type": "market_alpha",
+                "text": "📊 SPARK ONE • GLOBAL ASSET RADAR & REAL-TIME DATA\n\n• Gold (RWA): Live bullion quote\n• Bitcoin / Ethereum: Real-time crypto quotes\n• NVIDIA / Apple: Wall Street equity beta\n\nSPARK AI Quant Outlook & Macro Alpha.\n\n👉 Platform: https://sparkone.io\n#StockMarket #Crypto #Gold #QuantTrading #Alpha #SparkOne",
+                "image_filename": None,
+                "image_base64": None,
+                "scheduled_date": today_str,
+                "scheduled_time": "21:00",
                 "repeat": "daily",
                 "enabled": True,
                 "status": "pending",
@@ -299,8 +317,30 @@ class TwitterService:
                 "created_at": now.strftime("%Y-%m-%d %H:%M:%S")
             }
         ]
+
+    @classmethod
+    def reset_daily_3_schedules(cls) -> List[Dict[str, Any]]:
+        """一键初始化/重置为每日 3 次全自动发文任务流水线"""
+        defaults = cls.get_default_daily_schedules()
         cls.save_schedules(defaults)
+        logger.info("✅ 已成功重置推特发文排期为官方每日 3 次全自动运营流水线")
         return defaults
+
+    @classmethod
+    def load_schedules(cls) -> List[Dict[str, Any]]:
+        """读取所有已制定的自动发文排期任务"""
+        path = cls._get_schedules_path()
+        if path.exists():
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    schedules = json.load(f)
+                    if isinstance(schedules, list) and len(schedules) > 0:
+                        return schedules
+            except Exception as e:
+                logger.error(f"读取推特排期失败: {e}")
+
+        # 如果没有排期，默认初始化官方每日 3 次全自动任务
+        return cls.reset_daily_3_schedules()
 
     @classmethod
     def save_schedules(cls, schedules: List[Dict[str, Any]]) -> bool:
@@ -327,6 +367,7 @@ class TwitterService:
         new_item = {
             "id": f"tw_{int(now.timestamp())}_{len(schedules)+1}",
             "title": item.get("title") or "未命名推特排期",
+            "post_type": item.get("post_type"), # "sparkone_brand" | "crypto_news" | "market_alpha" | None
             "text": item.get("text", "").strip(),
             "image_filename": item.get("image_filename"),
             "image_base64": item.get("image_base64"),
@@ -377,8 +418,19 @@ class TwitterService:
         if not target:
             return {"success": False, "error": "未找到指定的推特排期任务"}
 
+        content_to_post = target.get("text", "")
+        post_type = target.get("post_type")
+        # 若设置了动态生成类型，即时生成最新鲜的内容（最新白皮书章节、最新突发新闻、最新实时行情）
+        if post_type in ["sparkone_brand", "crypto_news", "market_alpha"]:
+            try:
+                gen = TwitterContentGenerator.generate_post(post_type)
+                content_to_post = gen.get("text", content_to_post)
+                target["text"] = content_to_post
+            except Exception as e:
+                logger.warning(f"动态生成最新推特内容失败，将使用预设文案: {e}")
+
         res = cls.post_tweet(
-            text=target.get("text", ""),
+            text=content_to_post,
             image_path=target.get("image_filename"),
             image_base64=target.get("image_base64")
         )
@@ -430,8 +482,20 @@ class TwitterService:
             if now >= due_dt:
                 logger.info(f"⏰ 触发推特到期自动发布任务: {item.get('title')} (ID: {item.get('id')})")
                 item["status"] = "sending"
+
+                content_to_post = item.get("text", "")
+                post_type = item.get("post_type")
+                # 动态生成：在到期执行瞬间实时抓取最新突发新闻或最新股票/代币/黄金行情
+                if post_type in ["sparkone_brand", "crypto_news", "market_alpha"]:
+                    try:
+                        gen = TwitterContentGenerator.generate_post(post_type)
+                        content_to_post = gen.get("text", content_to_post)
+                        item["text"] = content_to_post
+                    except Exception as e:
+                        logger.warning(f"到期自动生成最新推特内容失败，将使用预设文案: {e}")
+
                 res = cls.post_tweet(
-                    text=item.get("text", ""),
+                    text=content_to_post,
                     image_path=item.get("image_filename"),
                     image_base64=item.get("image_base64")
                 )

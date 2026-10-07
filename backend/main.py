@@ -574,6 +574,7 @@ async def check_campaign_due_cron():
 
 # ================= Twitter / X (x.com) 运营与自动发文接口 =================
 from backend.twitter_service import TwitterService
+from backend.twitter_content_generator import TwitterContentGenerator
 
 class TwitterConfigModel(BaseModel):
     api_key: str
@@ -597,6 +598,7 @@ class TweetPostModel(BaseModel):
 class TwitterScheduleModel(BaseModel):
     title: str
     text: str
+    post_type: Optional[str] = None
     image_filename: Optional[str] = None
     image_base64: Optional[str] = None
     scheduled_date: str
@@ -689,6 +691,18 @@ def trigger_twitter_schedule(schedule_id: str):
 def get_twitter_templates():
     """获取推特精选高转化文案模版"""
     return {"success": True, "templates": TwitterService.get_templates()}
+
+@app.get("/api/twitter/generate_preview/{post_type}")
+def generate_twitter_preview(post_type: str):
+    """动态生成推特运营内容预览 (sparkone_brand | crypto_news | market_alpha)"""
+    post = TwitterContentGenerator.generate_post(post_type)
+    return {"success": True, "post": post}
+
+@app.post("/api/twitter/schedules/reset_daily_3")
+def reset_twitter_daily_3_schedules():
+    """一键初始化/重置官方每日 3 次全自动运营发文排期 (10:00 白皮书卖点 / 14:30 区块链要闻 / 21:00 跨资产实时数据+量化观点)"""
+    schedules = TwitterService.reset_daily_3_schedules()
+    return {"success": True, "schedules": schedules}
 
 @app.get("/api/twitter/check")
 def check_twitter_due_cron():

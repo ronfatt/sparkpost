@@ -1593,10 +1593,53 @@
           <div class="lg:col-span-7 space-y-4">
             <div class="glass-card rounded-xl p-5 space-y-4">
               
+              <!-- 推特每日 3 次自动化运营 AI 智能内容实时获取 -->
+              <div class="p-3.5 rounded-xl bg-gradient-to-r from-sky-950/80 via-indigo-950/70 to-purple-950/80 border border-sky-500/40 shadow-lg space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-sky-200 flex items-center gap-1.5">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+                    <span>推特每日 3 次全自动运营 · 核心文案一键获取:</span>
+                  </span>
+                  <span class="text-[10px] text-sky-300/80 flex items-center gap-1">
+                    <i v-if="isGeneratingTweetAI" class="fa-solid fa-spinner animate-spin"></i>
+                    <span>{{ isGeneratingTweetAI ? '正在实时抓取生成中...' : '点击即可自动填入并右侧预览' }}</span>
+                  </span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <button 
+                    type="button"
+                    @click="generateTwitterAIContent('sparkone_brand')"
+                    :disabled="isGeneratingTweetAI"
+                    title="从 162 页白皮书与 PPT 动态轮播提取 10 大核心卖点 (RWA黄金、5大AI引擎、资管架构)"
+                    class="text-xs px-2.5 py-2 rounded-lg bg-sky-900/60 hover:bg-sky-800/80 text-sky-200 border border-sky-600/40 transition flex items-center justify-center gap-1.5 font-medium shadow-sm hover:scale-[1.02] active:scale-[0.98]">
+                    <i class="fa-solid fa-landmark text-sky-400"></i>
+                    <span>① 官方白皮书核心卖点</span>
+                  </button>
+                  <button 
+                    type="button"
+                    @click="generateTwitterAIContent('crypto_news')"
+                    :disabled="isGeneratingTweetAI"
+                    title="实时抓取全球区块链权威要闻 (Cointelegraph等) 并附带 SPARK 独家量化投研解读"
+                    class="text-xs px-2.5 py-2 rounded-lg bg-indigo-900/60 hover:bg-indigo-800/80 text-indigo-200 border border-indigo-600/40 transition flex items-center justify-center gap-1.5 font-medium shadow-sm hover:scale-[1.02] active:scale-[0.98]">
+                    <i class="fa-solid fa-bolt text-amber-400"></i>
+                    <span>② 全球区块链要闻+观点</span>
+                  </button>
+                  <button 
+                    type="button"
+                    @click="generateTwitterAIContent('market_alpha')"
+                    :disabled="isGeneratingTweetAI"
+                    title="实时抓取现货黄金 RWA、BTC、ETH、美股英伟达/苹果行情 + SPARK 彭博级宏观投研观点"
+                    class="text-xs px-2.5 py-2 rounded-lg bg-purple-900/60 hover:bg-purple-800/80 text-purple-200 border border-purple-600/40 transition flex items-center justify-center gap-1.5 font-medium shadow-sm hover:scale-[1.02] active:scale-[0.98]">
+                    <i class="fa-solid fa-chart-line text-emerald-400"></i>
+                    <span>③ 跨资产实时行情+AI</span>
+                  </button>
+                </div>
+              </div>
+
               <!-- 爆款模板快速套用栏 -->
               <div>
                 <label class="block text-xs font-bold text-gray-300 mb-2 flex items-center gap-1.5">
-                  <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+                  <i class="fa-solid fa-file-lines text-sky-400"></i>
                   <span>快速套用 Web3 / AI 爆款推文模板:</span>
                 </label>
                 <div class="flex flex-wrap gap-2">
@@ -1810,6 +1853,38 @@
         <!-- ================= 子页面 2: 制定自动发文排期 ================= -->
         <div v-if="twitterSubTab === 'pipeline'" class="space-y-4">
           
+          <!-- 官方每日 3 次全自动运营流水线卡片 -->
+          <div class="glass-card rounded-xl p-5 border border-sky-500/30 bg-gradient-to-r from-sky-950/60 via-gray-900/80 to-purple-950/60 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-sm font-bold text-white flex items-center gap-1.5">
+                  <i class="fa-solid fa-bolt text-amber-400"></i>
+                  <span>推特官方 3 次自动化发文系统 (全天候 24/7 自动轮巡发布)</span>
+                </span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                  后台心跳每分钟精准巡检
+                </span>
+              </div>
+              <p class="text-xs text-gray-300 leading-relaxed">
+                ① <b>10:00</b> SparkOne 官方项目/白皮书核心卖点轮播 🏛️ | 
+                ② <b>14:30</b> 全球区块链突发要闻实时速递 ⚡ | 
+                ③ <b>21:00</b> 美股/代币/现货黄金实时数据与量化投研观点 📊
+              </p>
+              <p class="text-[11px] text-sky-400/90">
+                💡 机制说明：到达预定时间时，系统在执行瞬间<b>实时抓取全球最新突发新闻与实时资产价格</b>，确保推文永不过期、极具专业公信力！
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+              <button 
+                @click="resetTwitterDaily3Schedules"
+                class="px-4 py-2 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-rotate"></i>
+                <span>一键恢复官方 3 次自动化排期</span>
+              </button>
+            </div>
+          </div>
+
           <div class="glass-card rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-gray-800">
             <div>
               <h3 class="font-bold text-white text-base flex items-center gap-2">
@@ -1838,7 +1913,7 @@
               <span>新增推特排期任务</span>
             </h4>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <div>
                 <label class="block text-xs text-gray-400 mb-1">任务名称/主题:</label>
                 <input 
@@ -1846,6 +1921,15 @@
                   v-model="newScheduleForm.title" 
                   placeholder="例如: 每日美股开盘 AI 投研早报" 
                   class="w-full glass-input rounded-lg p-2 text-xs">
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">动态生成模式 (可选):</label>
+                <select v-model="newScheduleForm.post_type" class="w-full glass-input rounded-lg p-2 text-xs">
+                  <option value="">自定义固定推文</option>
+                  <option value="sparkone_brand">🏛️ 动态轮播白皮书/项目核心卖点</option>
+                  <option value="crypto_news">⚡ 到期实时抓取区块链突发要闻</option>
+                  <option value="market_alpha">📊 到期实时抓取美股/代币/黄金行情+AI</option>
+                </select>
               </div>
               <div>
                 <label class="block text-xs text-gray-400 mb-1">执行日期:</label>
@@ -1945,6 +2029,17 @@
                   </span>
                   <span v-else class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold flex items-center gap-1">
                     <i class="fa-solid fa-clock"></i> 待发送
+                  </span>
+
+                  <!-- 动态内容模式徽章 -->
+                  <span v-if="sched.post_type === 'sparkone_brand'" class="text-[10px] px-2 py-0.5 rounded-full bg-sky-900/60 text-sky-200 border border-sky-600/40 font-medium">
+                    🏛️ 官方白皮书深度
+                  </span>
+                  <span v-else-if="sched.post_type === 'crypto_news'" class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-900/60 text-indigo-200 border border-indigo-600/40 font-medium">
+                    ⚡ 实时区块链要闻
+                  </span>
+                  <span v-else-if="sched.post_type === 'market_alpha'" class="text-[10px] px-2 py-0.5 rounded-full bg-purple-900/60 text-purple-200 border border-purple-600/40 font-medium">
+                    📊 实时跨资产行情+AI
                   </span>
 
                   <!-- 循环方式 -->
@@ -2250,6 +2345,7 @@
         const tweetDraftText = ref('');
         const tweetDraftImage = ref(null);
         const isPostingTweet = ref(false);
+        const isGeneratingTweetAI = ref(false);
         const isVerifyingTwitter = ref(false);
         const isSavingTwitterConfig = ref(false);
         const lastPostedTweetUrl = ref('');
@@ -2257,6 +2353,7 @@
         const newScheduleForm = ref({
           title: '',
           text: '',
+          post_type: '',
           scheduled_date: '',
           scheduled_time: '10:00',
           repeat: 'daily',
@@ -3178,6 +3275,7 @@ Beware of scammers and impersonators posing as official SparkOne team members!
               newScheduleForm.value = {
                 title: '',
                 text: '',
+                post_type: '',
                 scheduled_date: '',
                 scheduled_time: '10:00',
                 repeat: 'daily',
@@ -3232,6 +3330,39 @@ Beware of scammers and impersonators posing as official SparkOne team members!
             }
           } catch (e) {
             alert('触发异常: ' + e);
+          }
+        };
+
+        const generateTwitterAIContent = async (postType) => {
+          isGeneratingTweetAI.value = true;
+          try {
+            const res = await fetch(`/api/twitter/generate_preview/${postType}`);
+            const data = await res.json();
+            if (data.success && data.post) {
+              tweetDraftText.value = data.post.text;
+            } else {
+              alert('获取推文文案失败: ' + (data.error || '未知错误'));
+            }
+          } catch (e) {
+            alert('获取推文异常: ' + e);
+          } finally {
+            isGeneratingTweetAI.value = false;
+          }
+        };
+
+        const resetTwitterDaily3Schedules = async () => {
+          if (!confirm('确定要一键恢复官方推荐的每日 3 次自动化发文排期吗？\n\n1. 10:00 SparkOne 官方项目/白皮书核心卖点轮播 🏛️\n2. 14:30 全球区块链突发要闻实时速递 ⚡\n3. 21:00 美股/代币/现货黄金实时数据与量化投研观点 📊')) return;
+          try {
+            const res = await fetch('/api/twitter/schedules/reset_daily_3', { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+              await loadTwitterSchedules();
+              alert('🎉 已成功恢复官方每日 3 次全自动运营流水线！');
+            } else {
+              alert('恢复排期失败: ' + (data.error || '未知错误'));
+            }
+          } catch (e) {
+            alert('重置异常: ' + e);
           }
         };
 
@@ -3525,6 +3656,9 @@ Beware of scammers and impersonators posing as official SparkOne team members!
           deleteTwitterSchedule,
           toggleTwitterScheduleEnabled,
           triggerTwitterScheduleNow,
+          isGeneratingTweetAI,
+          generateTwitterAIContent,
+          resetTwitterDaily3Schedules,
           // 其它社区/市场模块
           selectedHubTopic,
           hubContentText,
